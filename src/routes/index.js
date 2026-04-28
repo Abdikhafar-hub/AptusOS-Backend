@@ -24,6 +24,7 @@ router.use('/hr/attendance', authenticate, require('./attendanceRoutes'));
 router.use('/hr/actions', authenticate, require('./hrActionRoutes'));
 router.use('/hr/separations', authenticate, require('./separationRoutes'));
 router.use('/payroll', authenticate, require('./payrollRoutes'));
+router.use('/finance/reports', require('./financeReportRoutes'));
 router.use('/finance/requests', authenticate, require('./financeRequestRoutes'));
 router.use('/finance/budgets', authenticate, require('./budgetRoutes'));
 router.use('/accounts', authenticate, require('./accountRoutes'));

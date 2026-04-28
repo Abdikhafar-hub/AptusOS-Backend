@@ -1,28 +1,43 @@
 const { z } = require('zod');
 
+const cycleBody = z.object({
+  periodMonth: z.coerce.number().int().min(1).max(12),
+  periodYear: z.coerce.number().int().min(2000).max(3000),
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional(),
+  currency: z.string().min(3).optional(),
+  notes: z.string().optional()
+});
+
 module.exports = {
-  remunerationCreate: z.object({
-    body: z.object({
-      employeeId: z.string().min(1),
-      baseSalary: z.coerce.number().positive(),
-      allowances: z.any().optional(),
-      deductions: z.any().optional(),
-      currency: z.string().min(3).default('KES'),
-      effectiveFrom: z.coerce.date(),
-      effectiveTo: z.coerce.date().optional()
-    })
+  cycleCreate: z.object({ body: cycleBody }),
+  cycleRun: z.object({ body: cycleBody }),
+  recordListQuery: z.object({
+    query: z.object({
+      page: z.coerce.number().int().positive().optional(),
+      limit: z.coerce.number().int().positive().optional(),
+      cycleId: z.string().optional(),
+      status: z.enum(['DRAFT', 'CALCULATED', 'APPROVED', 'PAID', 'FLAGGED']).optional(),
+      employeeId: z.string().optional(),
+      sortBy: z.string().optional(),
+      sortOrder: z.enum(['asc', 'desc']).optional(),
+      search: z.string().optional()
+    }).optional()
   }),
-  payslipGenerate: z.object({
-    body: z.object({
-      employeeId: z.string().min(1),
-      month: z.number().int().min(1).max(12),
-      year: z.number().int().min(2000).max(3000)
-    })
+  cycleListQuery: z.object({
+    query: z.object({
+      page: z.coerce.number().int().positive().optional(),
+      limit: z.coerce.number().int().positive().optional(),
+      periodMonth: z.coerce.number().int().min(1).max(12).optional(),
+      periodYear: z.coerce.number().int().min(2000).max(3000).optional(),
+      status: z.enum(['DRAFT', 'PROCESSING', 'PENDING_APPROVAL', 'APPROVED', 'PAID']).optional()
+    }).optional()
   }),
-  payslipDecision: z.object({
-    body: z.object({
-      decision: z.enum(['APPROVED', 'REJECTED']),
-      comment: z.string().optional()
-    })
+  summaryQuery: z.object({
+    query: z.object({
+      cycleId: z.string().optional(),
+      month: z.coerce.number().int().min(1).max(12).optional(),
+      year: z.coerce.number().int().min(2000).max(3000).optional()
+    }).optional()
   })
 };

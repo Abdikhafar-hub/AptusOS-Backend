@@ -190,6 +190,89 @@ enum FinanceRequestStatus {
   CANCELLED
 }
 
+enum PayrollPayFrequency {
+  MONTHLY
+}
+
+enum CompensationValueType {
+  FIXED
+  PERCENTAGE
+}
+
+enum DeductionCategory {
+  TAX
+  LOAN
+  BENEFIT
+  STATUTORY
+  OTHER
+}
+
+enum DeductionTiming {
+  PRE_TAX
+  POST_TAX
+}
+
+enum PayrollCycleStatus {
+  DRAFT
+  PROCESSING
+  PENDING_APPROVAL
+  APPROVED
+  PAID
+}
+
+enum PayrollRecordStatus {
+  DRAFT
+  CALCULATED
+  APPROVED
+  PAID
+  FLAGGED
+}
+
+enum PayrollLineItemType {
+  EARNING
+  DEDUCTION
+}
+
+enum PayrollLineSourceType {
+  BASE_SALARY
+  ALLOWANCE
+  DEDUCTION
+  STATUTORY
+}
+
+enum PayrollStatutoryRuleType {
+  TAX_BRACKETS
+  FIXED
+  PERCENTAGE
+}
+
+enum BudgetType {
+  ANNUAL
+  QUARTERLY
+  MONTHLY
+  PROJECT_BASED
+}
+
+enum BudgetCategory {
+  OPERATIONAL
+  CAPEX
+  PAYROLL
+  MARKETING
+  IT
+  OTHER
+}
+
+enum BudgetApprovalStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+}
+
+enum OverspendingLimitType {
+  PERCENT
+  AMOUNT
+}
+
 enum CustomerStatus {
   DRAFT
   SUBMITTED
@@ -509,10 +592,20 @@ enum AuditAction {
   LEAVE_REQUESTED
   LEAVE_APPROVED
   LEAVE_UPDATED
+  LEAVE_CREATED_FOR_STAFF
   FINANCE_REQUEST_CREATED
   FINANCE_REQUEST_PAID
   FINANCE_REQUEST_UPDATED
+  BUDGET_CREATED
+  BUDGET_APPROVED
+  BUDGET_UPDATED
   PAYROLL_UPDATED
+  PAYROLL_CYCLE_CREATED
+  PAYROLL_RUN
+  PAYROLL_RECALCULATED
+  PAYROLL_APPROVED
+  PAYROLL_PAID
+  PAYROLL_RESET
   ROLE_CHANGED
   DEPARTMENT_CHANGED
   COMPLIANCE_UPDATED
@@ -621,6 +714,17 @@ model User {
   remunerations          Remuneration[]
   payslips               Payslip[]                  @relation("EmployeePayslips")
   generatedPayslips      Payslip[]                  @relation("GeneratedPayslips")
+  employeeCompensations  EmployeeCompensation[]     @relation("EmployeeCompensations")
+  compensationProfilesCreated EmployeeCompensation[] @relation("CompensationCreators")
+  allowances             Allowance[]                @relation("EmployeeAllowances")
+  deductions             Deduction[]                @relation("EmployeeDeductions")
+  allowancesCreated      Allowance[]                @relation("AllowanceCreators")
+  deductionsCreated      Deduction[]                @relation("DeductionCreators")
+  payrollCyclesCreated   PayrollCycle[]             @relation("PayrollCycleCreatedBy")
+  payrollCyclesApproved  PayrollCycle[]             @relation("PayrollCycleApprovedBy")
+  payrollRecords         PayrollRecord[]            @relation("PayrollRecordEmployee")
+  payrollAuditLogs       PayrollAuditLog[]          @relation("PayrollAuditPerformer")
+  payrollRulesCreated    PayrollStatutoryRule[]     @relation("PayrollRuleCreator")
   financeRequests        FinanceRequest[]
   customerOnboardings    CustomerOnboarding[]
   ownedCustomerAccounts  CustomerOnboarding[]        @relation("CustomerAccountOwner")
@@ -671,6 +775,8 @@ model Department {
   leavePolicies  LeavePolicy[]
   financeRequests FinanceRequest[]
   budgets        Budget[]
+  allowances     Allowance[]
+  deductions     Deduction[]
   requisitions   Requisition[]
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
@@ -1179,6 +1285,175 @@ model Payslip {
   @@unique([employeeId, month, year])
 }
 
+model EmployeeCompensation {
+  id            String             @id @default(cuid())
+  employeeId    String
+  baseSalary    Decimal
+  payFrequency  PayrollPayFrequency @default(MONTHLY)
+  currency      String             @default("KES")
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  createdById   String?
+  employee      User               @relation("EmployeeCompensations", fields: [employeeId], references: [id])
+  createdBy     User?              @relation("CompensationCreators", fields: [createdById], references: [id])
+  payrollRecords PayrollRecord[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  deletedAt     DateTime?
+  @@index([employeeId, effectiveFrom])
+}
+
+model Allowance {
+  id            String              @id @default(cuid())
+  name          String
+  employeeId    String?
+  departmentId  String?
+  type          CompensationValueType
+  amount        Decimal
+  taxable       Boolean             @default(true)
+  recurring     Boolean             @default(true)
+  isRuleBased   Boolean             @default(false)
+  currency      String              @default("KES")
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  createdById   String?
+  employee      User?               @relation("EmployeeAllowances", fields: [employeeId], references: [id])
+  department    Department?         @relation(fields: [departmentId], references: [id])
+  createdBy     User?               @relation("AllowanceCreators", fields: [createdById], references: [id])
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+  @@index([employeeId, effectiveFrom])
+  @@index([departmentId, effectiveFrom])
+}
+
+model Deduction {
+  id              String              @id @default(cuid())
+  name            String
+  employeeId      String?
+  departmentId    String?
+  category        DeductionCategory
+  calculationType CompensationValueType
+  amount          Decimal
+  timing          DeductionTiming
+  recurring       Boolean             @default(true)
+  isRuleBased     Boolean             @default(false)
+  currency        String              @default("KES")
+  effectiveFrom   DateTime
+  effectiveTo     DateTime?
+  createdById     String?
+  employee        User?               @relation("EmployeeDeductions", fields: [employeeId], references: [id])
+  department      Department?         @relation(fields: [departmentId], references: [id])
+  createdBy       User?               @relation("DeductionCreators", fields: [createdById], references: [id])
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  deletedAt       DateTime?
+  @@index([employeeId, effectiveFrom])
+  @@index([departmentId, effectiveFrom])
+}
+
+model PayrollStatutoryRule {
+  id            String                 @id @default(cuid())
+  name          String
+  code          String                 @unique
+  ruleType      PayrollStatutoryRuleType
+  config        Json
+  priority      Int                    @default(100)
+  isActive      Boolean                @default(true)
+  currency      String                 @default("KES")
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  createdById   String?
+  createdBy     User?                  @relation("PayrollRuleCreator", fields: [createdById], references: [id])
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  deletedAt     DateTime?
+  @@index([effectiveFrom, effectiveTo, isActive])
+}
+
+model PayrollCycle {
+  id          String             @id @default(cuid())
+  periodMonth Int
+  periodYear  Int
+  startDate   DateTime
+  endDate     DateTime
+  status      PayrollCycleStatus @default(DRAFT)
+  currency    String             @default("KES")
+  createdById String
+  approvedById String?
+  approvedAt  DateTime?
+  paidAt      DateTime?
+  notes       String?
+  lockedAt    DateTime?
+  createdBy   User               @relation("PayrollCycleCreatedBy", fields: [createdById], references: [id])
+  approvedBy  User?              @relation("PayrollCycleApprovedBy", fields: [approvedById], references: [id])
+  records     PayrollRecord[]
+  audits      PayrollAuditLog[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  deletedAt   DateTime?
+  @@unique([periodMonth, periodYear])
+  @@index([status, periodYear, periodMonth])
+}
+
+model PayrollRecord {
+  id               String              @id @default(cuid())
+  payrollCycleId   String
+  employeeId       String
+  compensationId   String?
+  baseSalary       Decimal
+  grossPay         Decimal
+  totalAllowances  Decimal
+  taxableIncome    Decimal
+  totalDeductions  Decimal
+  netPay           Decimal
+  currency         String              @default("KES")
+  status           PayrollRecordStatus @default(DRAFT)
+  hasAnomaly       Boolean             @default(false)
+  anomalyReason    String?
+  cycle            PayrollCycle        @relation(fields: [payrollCycleId], references: [id])
+  employee         User                @relation("PayrollRecordEmployee", fields: [employeeId], references: [id])
+  compensation     EmployeeCompensation? @relation(fields: [compensationId], references: [id])
+  lineItems        PayrollLineItem[]
+  audits           PayrollAuditLog[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  deletedAt        DateTime?
+  @@unique([payrollCycleId, employeeId])
+  @@index([employeeId, payrollCycleId])
+  @@index([status])
+}
+
+model PayrollLineItem {
+  id                   String              @id @default(cuid())
+  payrollRecordId      String
+  type                 PayrollLineItemType
+  sourceType           PayrollLineSourceType
+  name                 String
+  amount               Decimal
+  calculationReference Json?
+  record               PayrollRecord       @relation(fields: [payrollRecordId], references: [id])
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  @@index([payrollRecordId, type])
+}
+
+model PayrollAuditLog {
+  id             String        @id @default(cuid())
+  payrollCycleId String?
+  payrollRecordId String?
+  action         String
+  performedById  String
+  payloadBefore  Json?
+  payloadAfter   Json?
+  cycle          PayrollCycle? @relation(fields: [payrollCycleId], references: [id])
+  record         PayrollRecord? @relation(fields: [payrollRecordId], references: [id])
+  performedBy    User          @relation("PayrollAuditPerformer", fields: [performedById], references: [id])
+  createdAt      DateTime      @default(now())
+  @@index([payrollCycleId, createdAt])
+  @@index([payrollRecordId, createdAt])
+}
+
 model FinanceRequest {
   id                     String             @id @default(cuid())
   requestedById           String
@@ -1205,17 +1480,38 @@ model FinanceRequest {
 }
 
 model Budget {
-  id           String     @id @default(cuid())
-  departmentId String
-  year         Int
-  month        Int?
-  amount       Decimal
-  currency     String     @default("KES")
-  spent        Decimal    @default(0)
-  department   Department @relation(fields: [departmentId], references: [id])
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  deletedAt    DateTime?
+  id                     String                @id @default(cuid())
+  departmentId           String
+  name                   String?
+  budgetType             BudgetType            @default(ANNUAL)
+  budgetCategory         BudgetCategory        @default(OPERATIONAL)
+  year                   Int
+  month                  Int?
+  periodStartDate        DateTime?
+  periodEndDate          DateTime?
+  amount                 Decimal
+  currency               String                @default("KES")
+  spent                  Decimal               @default(0)
+  lineItems              Json?
+  approvalStatus         BudgetApprovalStatus  @default(DRAFT)
+  budgetOwnerId          String?
+  approverId             String?
+  approvedById           String?
+  approvedAt             DateTime?
+  createdById            String?
+  allowOverspending      Boolean               @default(false)
+  overspendingLimitType  OverspendingLimitType?
+  overspendingLimitValue Decimal?
+  alertThresholds        Int[]                 @default([50, 75, 90, 100])
+  costCenter             String?
+  projectCode            String?
+  notes                  String?
+  supportingDocumentId   String?
+  amountChangeHistory    Json?
+  department             Department            @relation(fields: [departmentId], references: [id])
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  deletedAt              DateTime?
   @@index([departmentId, year, month])
 }
 

@@ -64,6 +64,48 @@ const financeRequestListInclude = {
 
 const toDate = (value) => (value ? new Date(value) : undefined);
 
+function normalizeDate(value) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
+function toDateOnly(value) {
+  const normalized = normalizeDate(value);
+  if (!normalized) return null;
+  return new Date(Date.UTC(normalized.getUTCFullYear(), normalized.getUTCMonth(), normalized.getUTCDate()));
+}
+
+function normalizePeriod({ year, budgetType, periodStartDate, periodEndDate }) {
+  const normalizedYear = Number(year);
+  const startCandidate = toDateOnly(periodStartDate) || new Date(Date.UTC(normalizedYear, 0, 1));
+  let start = startCandidate;
+  let end = toDateOnly(periodEndDate);
+  let month = null;
+
+  if (budgetType === 'ANNUAL') {
+    start = new Date(Date.UTC(normalizedYear, 0, 1));
+    end = new Date(Date.UTC(normalizedYear, 11, 31));
+    month = null;
+  } else if (budgetType === 'MONTHLY') {
+    start = new Date(Date.UTC(normalizedYear, startCandidate.getUTCMonth(), 1));
+    end = new Date(Date.UTC(normalizedYear, startCandidate.getUTCMonth() + 1, 0));
+    month = start.getUTCMonth() + 1;
+  } else if (budgetType === 'QUARTERLY') {
+    const quarterStartMonth = Math.floor(startCandidate.getUTCMonth() / 3) * 3;
+    start = new Date(Date.UTC(normalizedYear, quarterStartMonth, 1));
+    end = new Date(Date.UTC(normalizedYear, quarterStartMonth + 3, 0));
+    month = start.getUTCMonth() + 1;
+  } else {
+    start = startCandidate;
+    end = end || startCandidate;
+    month = start.getUTCMonth() + 1;
+  }
+
+  return { start, end, month };
+}
+
 const financeService = {
   buildWhere(auth, query = {}) {
     const where = { deletedAt: null, AND: [] };
@@ -444,22 +486,139 @@ const financeService = {
       throw new AppError('Only Finance & Accounts Manager or General Manager can manage budgets', 403);
     }
 
+    const budgetType = data.budgetType || 'ANNUAL';
+    const approvalStatus = data.approvalStatus || 'DRAFT';
+    const isDraft = approvalStatus === 'DRAFT';
+    const lineItems = Array.isArray(data.lineItems) ? data.lineItems : [];
+
+    const normalizedLineItems = lineItems
+      .map((line) => ({
+        category: String(line.category || '').trim(),
+        description: line.description ? String(line.description).trim() : null,
+        allocatedAmount: Number(line.allocatedAmount || 0)
+      }))
+      .filter((line) => line.category || line.description || line.allocatedAmount > 0);
+
+    const lineItemTotal = normalizedLineItems.reduce((sum, line) => sum + Number(line.allocatedAmount || 0), 0);
+    const amount = Number(data.amount ?? lineItemTotal);
+
+    if (!isDraft) {
+      if (!data.name || !String(data.name).trim()) {
+        throw new AppError('Budget name is required', 400);
+      }
+      if (!normalizedLineItems.length) {
+        throw new AppError('At least 1 budget line is required', 400);
+      }
+      if (normalizedLineItems.some((line) => line.allocatedAmount <= 0 || !line.category)) {
+        throw new AppError('Each budget line must include category and amount greater than zero', 400);
+      }
+      if (lineItemTotal <= 0 || amount <= 0) {
+        throw new AppError('Budget amount must be greater than zero', 400);
+      }
+      if (Math.abs(amount - lineItemTotal) > 0.01) {
+        throw new AppError('Allocated amount must match sum of line items', 400);
+      }
+    }
+
+    const { start, end, month } = normalizePeriod({
+      year: data.year,
+      budgetType,
+      periodStartDate: data.periodStartDate,
+      periodEndDate: data.periodEndDate
+    });
+
+    if (!isDraft && (!start || !end)) {
+      throw new AppError('Budget period start and end dates are required', 400);
+    }
+
+    if (start && end && start >= end) {
+      throw new AppError('Start date must be before end date', 400);
+    }
+
+    if (!isDraft && data.allowOverspending && (!data.overspendingLimitType || Number(data.overspendingLimitValue || 0) <= 0)) {
+      throw new AppError('Overspending limit type and value are required when overspending is allowed', 400);
+    }
+
+    if (!isDraft && data.overspendingLimitType === 'PERCENT' && Number(data.overspendingLimitValue || 0) > 100) {
+      throw new AppError('Overspending percent limit cannot exceed 100', 400);
+    }
+
+    const periodOverlapWhere = start && end
+      ? {
+          OR: [
+            { periodStartDate: { lte: end }, periodEndDate: { gte: start } },
+            { periodStartDate: null, periodEndDate: null, year: Number(data.year), month: month || null }
+          ]
+        }
+      : { year: Number(data.year), month: month || null };
+
+    if (!isDraft && !data.allowDuplicatePeriod) {
+      const existing = await prisma.budget.findFirst({
+        where: {
+          deletedAt: null,
+          departmentId: data.departmentId,
+          ...periodOverlapWhere
+        }
+      });
+      if (existing) {
+        throw new AppError('A budget already exists for this department and period. Enable duplicate period to continue.', 409);
+      }
+    }
+
+    const isApproved = approvalStatus === 'APPROVED';
+    const approvedById = isApproved ? (data.approvedById || data.approverId || auth.userId) : null;
+    const approvedAt = isApproved ? new Date() : null;
+
     const budget = await prisma.budget.create({
       data: {
         departmentId: data.departmentId,
-        year: data.year,
-        month: data.month,
-        amount: data.amount,
-        currency: data.currency || 'KES'
+        name: data.name?.trim() || null,
+        budgetType,
+        budgetCategory: data.budgetCategory || 'OPERATIONAL',
+        year: Number(data.year),
+        month: Number.isInteger(Number(data.month)) ? Number(data.month) : month,
+        periodStartDate: start,
+        periodEndDate: end,
+        amount,
+        currency: data.currency || 'KES',
+        lineItems: normalizedLineItems,
+        approvalStatus,
+        budgetOwnerId: data.budgetOwnerId || null,
+        approverId: data.approverId || null,
+        approvedById,
+        approvedAt,
+        createdById: auth.userId,
+        allowOverspending: Boolean(data.allowOverspending),
+        overspendingLimitType: data.allowOverspending ? data.overspendingLimitType || null : null,
+        overspendingLimitValue: data.allowOverspending ? (data.overspendingLimitValue ?? null) : null,
+        alertThresholds: Array.isArray(data.alertThresholds) && data.alertThresholds.length
+          ? Array.from(new Set(data.alertThresholds.map((value) => Number(value)).filter((value) => Number.isFinite(value)))).sort((a, b) => a - b)
+          : [50, 75, 90, 100],
+        costCenter: data.costCenter || null,
+        projectCode: data.projectCode || null,
+        notes: data.notes || null,
+        supportingDocumentId: data.supportingDocumentId || null,
+        amountChangeHistory: [
+          {
+            changedAt: new Date().toISOString(),
+            changedById: auth.userId,
+            previousAmount: null,
+            newAmount: amount,
+            reason: 'INITIAL_CREATE'
+          }
+        ]
       }
     });
 
     await auditService.log({
       actorId: auth.userId,
-      action: AUDIT_ACTIONS.FINANCE_REQUEST_UPDATED,
+      action: isApproved ? AUDIT_ACTIONS.BUDGET_APPROVED : AUDIT_ACTIONS.BUDGET_CREATED,
       entityType: 'Budget',
       entityId: budget.id,
-      newValues: budget,
+      newValues: {
+        ...budget,
+        totalFromLineItems: lineItemTotal
+      },
       req
     });
 
@@ -506,7 +665,7 @@ const financeService = {
         take: 100
       }),
       prisma.financeRequest.findMany({
-        where: { deletedAt: null, status: { in: ['PAID', 'LOCKED'] } },
+        where: { deletedAt: null, status: { in: ['PAID'] } },
         include: financeRequestListInclude,
         orderBy: [{ paidAt: 'desc' }, { updatedAt: 'desc' }],
         take: 100
