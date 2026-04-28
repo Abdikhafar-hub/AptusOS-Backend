@@ -1,0 +1,48 @@
+const express = require('express');
+const { authenticate } = require('../middleware/auth');
+const { messageRouter, channelRouter, announcementRouter, commentRouter } = require('./communicationRoutes');
+
+const router = express.Router();
+
+router.use('/health', require('./healthRoutes'));
+router.use('/auth', require('./authRoutes'));
+router.use('/users', require('./userRoutes'));
+router.use('/roles', authenticate, require('./roleRoutes'));
+router.use('/permissions', authenticate, require('./permissionRoutes'));
+router.use('/departments', require('./departmentRoutes'));
+router.use('/documents', require('./documentRoutes'));
+router.use('/tasks', authenticate, require('./taskRoutes'));
+router.use('/approvals', require('./approvalRoutes'));
+router.use('/comments', commentRouter);
+router.use('/messages', messageRouter);
+router.use('/channels', channelRouter);
+router.use('/announcements', announcementRouter);
+router.use('/notifications', authenticate, require('./notificationRoutes'));
+router.use('/hr/onboarding', authenticate, require('./onboardingRoutes'));
+router.use('/hr/leave', authenticate, require('./leaveRoutes'));
+router.use('/hr/attendance', authenticate, require('./attendanceRoutes'));
+router.use('/hr/actions', authenticate, require('./hrActionRoutes'));
+router.use('/hr/separations', authenticate, require('./separationRoutes'));
+router.use('/payroll', authenticate, require('./payrollRoutes'));
+router.use('/finance/requests', authenticate, require('./financeRequestRoutes'));
+router.use('/finance/budgets', authenticate, require('./budgetRoutes'));
+router.use('/accounts', authenticate, require('./accountRoutes'));
+router.use('/customers/onboarding', authenticate, require('./customerOnboardingRoutes'));
+router.use('/sales-compliance/reports', authenticate, require('./salesReportRoutes'));
+router.use('/sales-compliance/client-visits', authenticate, require('./clientVisitRoutes'));
+router.use('/sales-compliance/complaints', authenticate, require('./complaintRoutes'));
+router.use('/sales-compliance', authenticate, require('./salesComplianceRoutes'));
+router.use('/compliance/items', authenticate, require('./complianceItemRoutes'));
+router.use('/compliance/risks', authenticate, require('./riskRoutes'));
+router.use('/compliance/incidents', authenticate, require('./incidentRoutes'));
+router.use('/compliance/policies', authenticate, require('./policyRoutes'));
+router.use('/operations/requisitions', authenticate, require('./requisitionRoutes'));
+router.use('/operations/vendors', authenticate, require('./vendorRoutes'));
+router.use('/trainings', authenticate, require('./trainingRoutes'));
+router.use('/performance', authenticate, require('./performanceRoutes'));
+router.use('/reports', require('./reportRoutes'));
+router.use('/audit-logs', authenticate, require('./auditLogRoutes'));
+router.use('/settings', authenticate, require('./settingRoutes'));
+router.use('/dashboard', require('./dashboardRoutes'));
+
+module.exports = router;

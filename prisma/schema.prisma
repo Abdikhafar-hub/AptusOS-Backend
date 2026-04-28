@@ -1,0 +1,1742 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  GENERAL_MANAGER
+  DEPARTMENT_HEAD
+  HR_MANAGER
+  FINANCE_ACCOUNTS_MANAGER
+  FINANCE_MANAGER
+  ACCOUNTS_OFFICER
+  SALES_COMPLIANCE_OFFICER
+  OPERATIONS_PROCUREMENT_OFFICER
+  EMPLOYEE
+  CUSTOM
+}
+
+enum DepartmentStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  SUSPENDED
+  TERMINATED
+  RESIGNED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  CONSULTANT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum Visibility {
+  COMPANY_INTERNAL
+  DEPARTMENT_ONLY
+  PRIVATE
+  RESTRICTED
+}
+
+enum DocumentStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  ARCHIVED
+  EXPIRED
+}
+
+enum DocumentOwnerType {
+  USER
+  DEPARTMENT
+  COMPANY
+  CUSTOMER
+  FINANCE
+  COMPLIANCE
+  HR
+  OPERATIONS
+}
+
+enum DocumentCategory {
+  COMPANY_CERTIFICATE
+  BUSINESS_REGISTRATION_CERTIFICATE
+  PHARMACY_LICENSE
+  IMPORT_PERMIT
+  STAFF_CONTRACT
+  HR_DOCUMENT
+  POLICY
+  SOP
+  SUPPLIER_AGREEMENT
+  CUSTOMER_LICENSE
+  BUSINESS_PERMIT
+  KRA_DOCUMENT
+  FINANCE_DOCUMENT
+  TAX_DOCUMENT
+  PHARMACIST_REGISTRATION_PROOF
+  PURCHASE_AUTHORIZATION_LETTER
+  TRAINING_CERTIFICATE
+  PERFORMANCE_DOCUMENT
+  OTHER
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  NEEDS_MORE_INFO
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  CRITICAL
+  NORMAL
+  IMPORTANT
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  IN_REVIEW
+  COMPLETED
+  CANCELLED
+}
+
+enum AnnouncementPriority {
+  NORMAL
+  IMPORTANT
+  URGENT
+  CRITICAL
+}
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  MATERNITY
+  PATERNITY
+  COMPASSIONATE
+  UNPAID
+  STUDY
+  OTHER
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  REMOTE
+  ON_LEAVE
+}
+
+enum HRActionType {
+  PROMOTION
+  TRANSFER
+  WARNING
+  SUSPENSION
+  TERMINATION
+  SALARY_ADJUSTMENT
+  ROLE_CHANGE
+  DEPARTMENT_CHANGE
+}
+
+enum SeparationType {
+  RESIGNATION
+  RETIREMENT
+  TERMINATION
+  CONTRACT_END
+}
+
+enum FinanceRequestType {
+  EXPENSE_REIMBURSEMENT
+  PAYMENT_REQUEST
+  PETTY_CASH
+  TRAVEL_REQUEST
+  PROCUREMENT_PAYMENT
+  OTHER
+}
+
+enum FinanceRequestStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  PAID
+  CANCELLED
+}
+
+enum CustomerStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum BusinessType {
+  PHARMACY
+  HOSPITAL
+  CLINIC
+  DISTRIBUTOR
+  WHOLESALER
+  CORPORATE
+  OTHER
+}
+
+enum ComplianceRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum DueDiligenceStatus {
+  PENDING
+  PASSED
+  FAILED
+  NEEDS_REVIEW
+}
+
+enum PaymentTerms {
+  CASH
+  CREDIT
+  MIXED
+}
+
+enum CustomerCategory {
+  RETAIL
+  WHOLESALE
+  INSTITUTION
+  CORPORATE
+}
+
+enum CustomerBlacklistStatus {
+  CLEAR
+  WATCHLISTED
+  BLOCKED
+}
+
+enum CustomerAccountStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_APPROVAL
+}
+
+enum AccountTier {
+  A
+  B
+  C
+  D
+}
+
+enum CustomerHealthStatus {
+  GOOD
+  WATCH
+  AT_RISK
+  BLOCKED
+}
+
+enum TerritoryStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum VisitRouteStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum VisitRouteStopStatus {
+  PLANNED
+  VISITED
+  MISSED
+  CANCELLED
+}
+
+enum AccountNoteType {
+  GENERAL
+  COMMERCIAL
+  COMPLIANCE
+  PAYMENT
+  RELATIONSHIP
+}
+
+enum OpportunityStage {
+  PROSPECTING
+  QUALIFICATION
+  NEGOTIATION
+  EXPECTED_ORDER
+  WON
+  LOST
+}
+
+enum OpportunityStatus {
+  OPEN
+  WON
+  LOST
+  CANCELLED
+}
+
+enum ProductFeedbackType {
+  DEMAND_SPIKE
+  QUALITY_COMPLAINT
+  SUBSTITUTION_REQUEST
+  PRICE_FEEDBACK
+  AVAILABILITY_ISSUE
+  OTHER
+}
+
+enum ProductFeedbackStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum IssueType {
+  DELIVERY
+  PRODUCT
+  PRICING
+  COMPLIANCE
+  PAYMENT
+  RELATIONSHIP
+  OTHER
+}
+
+enum IssueStatus {
+  OPEN
+  ESCALATED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum EscalationDepartment {
+  HR
+  FINANCE
+  OPERATIONS
+  COMPLIANCE
+  MANAGEMENT
+}
+
+enum DiscountRequestStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum CustomerAlertType {
+  LICENSE_EXPIRY
+  CREDIT_RISK
+  COMPLIANCE_RISK
+  OVERDUE_FOLLOWUP
+  ISSUE_SLA
+  DOCUMENT_MISSING
+  PAYMENT_DELAY
+}
+
+enum CustomerAlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+enum VisitType {
+  SALES
+  FOLLOW_UP
+  COMPLIANCE_CHECK
+  COMPLAINT
+  COLLECTION
+  RELATIONSHIP
+}
+
+enum ComplianceType {
+  LICENSE
+  IMPORT_PERMIT
+  SOP
+  POLICY
+  AUDIT_CHECKLIST
+  RISK
+  INCIDENT
+  REGULATORY_DOCUMENT
+  OTHER
+}
+
+enum GenericStatus {
+  DRAFT
+  SUBMITTED
+  PENDING
+  IN_PROGRESS
+  INVESTIGATING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+  OPEN
+  CLOSED
+  RESOLVED
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum RequisitionStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  FULFILLED
+  CANCELLED
+}
+
+enum RiskLikelihood {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RiskImpact {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TrainingType {
+  COMPLIANCE
+  SOP
+  SAFETY
+  SALES
+  HR
+  TECHNICAL
+  ONBOARDING
+  OTHER
+}
+
+enum TrainingStatus {
+  ASSIGNED
+  ATTENDED
+  COMPLETED
+  MISSED
+  CANCELLED
+}
+
+enum PerformanceStatus {
+  NOT_STARTED
+  SELF_REVIEW_PENDING
+  MANAGER_REVIEW_PENDING
+  HR_REVIEW_PENDING
+  COMPLETED
+}
+
+enum NotificationType {
+  DIRECT_MESSAGE
+  DEPARTMENT_MESSAGE
+  MENTION
+  TASK_ASSIGNED
+  APPROVAL_REQUEST
+  DOCUMENT_UPLOADED
+  DOCUMENT_EXPIRING_SOON
+  LEAVE_STATUS_CHANGED
+  EXPENSE_STATUS_CHANGED
+  ANNOUNCEMENT_PUBLISHED
+  TRAINING_ASSIGNED
+  PERFORMANCE_REVIEW_REQUESTED
+  SYSTEM
+}
+
+enum AuditAction {
+  USER_LOGIN
+  USER_FAILED_LOGIN
+  USER_LOGOUT
+  USER_CREATED
+  USER_UPDATED
+  USER_DEACTIVATED
+  STAFF_ONBOARDING_EMAIL_SENT
+  STAFF_ONBOARDING_EMAIL_FAILED
+  STAFF_CREDENTIALS_RESENT
+  STAFF_CREDENTIALS_RESEND_FAILED
+  COMMENT_ADDED
+  MESSAGE_SENT
+  MESSAGE_READ
+  MESSAGE_EMAIL_DELIVERED
+  MESSAGE_EMAIL_FAILED
+  ANNOUNCEMENT_PUBLISHED
+  DOCUMENT_UPLOADED
+  DOCUMENT_APPROVED
+  DOCUMENT_REJECTED
+  APPROVAL_CREATED
+  APPROVAL_APPROVED
+  APPROVAL_REJECTED
+  TASK_CREATED
+  TASK_UPDATED
+  LEAVE_REQUESTED
+  LEAVE_APPROVED
+  LEAVE_UPDATED
+  FINANCE_REQUEST_CREATED
+  FINANCE_REQUEST_PAID
+  FINANCE_REQUEST_UPDATED
+  PAYROLL_UPDATED
+  ROLE_CHANGED
+  DEPARTMENT_CHANGED
+  COMPLIANCE_UPDATED
+  SETTINGS_UPDATED
+}
+
+enum SettingScopeType {
+  ORGANIZATION
+  DEPARTMENT
+  ROLE
+  USER
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        RoleName
+  displayName String
+  description String?
+  isSystem    Boolean          @default(false)
+  permissions RolePermission[]
+  users       User[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+  @@unique([name, deletedAt])
+  @@index([name])
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  description String?
+  roles       RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  createdAt    DateTime   @default(now())
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model User {
+  id                     String                     @id @default(cuid())
+  firstName              String
+  lastName               String
+  fullName               String
+  email                  String                     @unique
+  phone                  String?
+  alternatePhone         String?
+  gender                 Gender?
+  dateOfBirth            DateTime?
+  nationalId             String?
+  passport               String?
+  kraPin                 String?
+  address                String?
+  emergencyContactName   String?
+  emergencyContactPhone  String?
+  jobTitle               String?
+  employmentType         EmploymentType            @default(FULL_TIME)
+  employmentStatus       EmploymentStatus          @default(ACTIVE)
+  joinDate               DateTime?
+  departmentId           String?
+  managerId              String?
+  roleId                 String
+  passwordHash           String?
+  mustChangePassword     Boolean                    @default(true)
+  profilePhotoUrl        String?
+  notes                  String?
+  isActive               Boolean                    @default(true)
+  lastLoginAt            DateTime?
+  department             Department?                @relation("UserDepartment", fields: [departmentId], references: [id])
+  manager                User?                      @relation("Manager", fields: [managerId], references: [id])
+  directReports          User[]                     @relation("Manager")
+  role                   Role                       @relation(fields: [roleId], references: [id])
+  headedDepartments      Department[]               @relation("DepartmentHead")
+  departmentMemberships  DepartmentMember[]
+  refreshTokens          RefreshToken[]
+  passwordResetTokens    PasswordResetToken[]
+  documentsUploaded      Document[]                 @relation("UploadedDocuments")
+  documentsApproved      Document[]                 @relation("ApprovedDocuments")
+  requestedApprovals     ApprovalRequest[]          @relation("RequestedApprovals")
+  currentApprovals       ApprovalRequest[]          @relation("CurrentApprover")
+  assignedTasks          Task[]                     @relation("AssignedTasks")
+  createdTasks           Task[]                     @relation("CreatedTasks")
+  comments               Comment[]
+  notifications          Notification[]
+  conversations          ConversationParticipant[]
+  messages               Message[]
+  channelMembers         ChannelMember[]
+  channelMessages        ChannelMessage[]
+  announcements          Announcement[]
+  announcementReads      AnnouncementRead[]
+  leaveRequests          LeaveRequest[]
+  leaveBalances          LeaveBalance[]
+  attendanceRecords      AttendanceRecord[]
+  onboardingChecklists   OnboardingChecklist[]
+  hrActions              HRAction[]                 @relation("EmployeeHRActions")
+  separations            Separation[]
+  remunerations          Remuneration[]
+  payslips               Payslip[]                  @relation("EmployeePayslips")
+  generatedPayslips      Payslip[]                  @relation("GeneratedPayslips")
+  financeRequests        FinanceRequest[]
+  customerOnboardings    CustomerOnboarding[]
+  ownedCustomerAccounts  CustomerOnboarding[]        @relation("CustomerAccountOwner")
+  assignedTerritories    SalesTerritory[]            @relation("TerritoryOfficer")
+  visitRoutes            VisitRoute[]                @relation("VisitRouteOfficer")
+  customerAccountNotes   CustomerAccountNote[]       @relation("CustomerAccountNoteAuthor")
+  salesOpportunitiesOwned SalesOpportunity[]         @relation("SalesOpportunityOwner")
+  productFeedbackSubmitted ProductFeedback[]         @relation("ProductFeedbackSubmitter")
+  customerIssuesReported CustomerIssue[]             @relation("CustomerIssueReporter")
+  customerIssuesAssigned CustomerIssue[]             @relation("CustomerIssueAssignee")
+  discountRequestsRequested DiscountRequest[]        @relation("DiscountRequestRequester")
+  salesReports           SalesReport[]
+  clientVisitNotes       ClientVisitNote[]
+  complaintEscalations   ComplaintEscalation[]
+  complianceItems        ComplianceItem[]
+  riskRegisters          RiskRegister[]
+  incidentReports        IncidentReport[]
+  policyAcknowledgements PolicyAcknowledgement[]
+  requisitions           Requisition[]
+  trainings              Training[]                 @relation("TrainingCreator")
+  trainingParticipants   TrainingParticipant[]
+  performanceReviews     PerformanceReview[]        @relation("EmployeeReviews")
+  reviewsGiven           PerformanceReview[]        @relation("ReviewerReviews")
+  auditLogs              AuditLog[]
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  deletedAt              DateTime?
+  @@index([roleId])
+  @@index([departmentId])
+  @@index([managerId])
+  @@index([employmentStatus])
+}
+
+model Department {
+  id             String             @id @default(cuid())
+  name           String             @unique
+  slug           String             @unique
+  description    String?
+  headId         String?
+  status         DepartmentStatus   @default(ACTIVE)
+  head           User?              @relation("DepartmentHead", fields: [headId], references: [id])
+  staff          User[]             @relation("UserDepartment")
+  members        DepartmentMember[]
+  documents      Document[]
+  channels       Channel[]
+  announcements  Announcement[]
+  tasks          Task[]
+  leavePolicies  LeavePolicy[]
+  financeRequests FinanceRequest[]
+  budgets        Budget[]
+  requisitions   Requisition[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  deletedAt      DateTime?
+  @@index([headId])
+}
+
+model DepartmentMember {
+  id           String     @id @default(cuid())
+  departmentId String
+  userId       String
+  department   Department @relation(fields: [departmentId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  @@unique([departmentId, userId])
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  ipAddress String?
+  userAgent String?
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  @@index([userId])
+}
+
+model Document {
+  id                 String            @id @default(cuid())
+  title              String
+  description        String?
+  category           DocumentCategory
+  documentType       String?
+  fileUrl            String
+  cloudinaryPublicId String?
+  fileName           String
+  mimeType           String
+  fileSize           Int
+  ownerType          DocumentOwnerType
+  ownerId            String?
+  uploadedById       String
+  departmentId       String?
+  visibility         Visibility        @default(PRIVATE)
+  status             DocumentStatus    @default(DRAFT)
+  version            Int               @default(1)
+  parentDocumentId   String?
+  expiryDate         DateTime?
+  reminderDate       DateTime?
+  approvedById       String?
+  approvedAt         DateTime?
+  rejectionReason    String?
+  uploadedBy         User              @relation("UploadedDocuments", fields: [uploadedById], references: [id])
+  approvedBy         User?             @relation("ApprovedDocuments", fields: [approvedById], references: [id])
+  department         Department?       @relation(fields: [departmentId], references: [id])
+  parentDocument     Document?         @relation("DocumentVersions", fields: [parentDocumentId], references: [id])
+  versions           Document[]        @relation("DocumentVersions")
+  documentVersions   DocumentVersion[]
+  comments           Comment[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  deletedAt          DateTime?
+  @@index([category])
+  @@index([ownerType, ownerId])
+  @@index([departmentId])
+  @@index([status])
+  @@index([expiryDate])
+}
+
+model DocumentVersion {
+  id                 String   @id @default(cuid())
+  documentId         String
+  version            Int
+  fileUrl            String
+  cloudinaryPublicId String?
+  fileName           String
+  mimeType           String
+  fileSize           Int
+  uploadedById       String
+  document           Document @relation(fields: [documentId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@unique([documentId, version])
+}
+
+model ApprovalRequest {
+  id                String          @id @default(cuid())
+  requestType       String
+  entityType        String
+  entityId          String
+  requestedById     String
+  currentApproverId String?
+  status            ApprovalStatus  @default(PENDING)
+  priority          Priority        @default(MEDIUM)
+  reason            String?
+  rejectionReason   String?
+  approvedAt        DateTime?
+  rejectedAt        DateTime?
+  requestedBy       User            @relation("RequestedApprovals", fields: [requestedById], references: [id])
+  currentApprover   User?           @relation("CurrentApprover", fields: [currentApproverId], references: [id])
+  steps             ApprovalStep[]
+  comments          Comment[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
+  @@index([entityType, entityId])
+  @@index([currentApproverId, status])
+  @@index([requestedById])
+}
+
+model ApprovalStep {
+  id                String         @id @default(cuid())
+  approvalRequestId String
+  stepOrder         Int
+  approverRoleId    String?
+  approverUserId    String?
+  status            ApprovalStatus @default(PENDING)
+  comment           String?
+  actedAt           DateTime?
+  approvalRequest   ApprovalRequest @relation(fields: [approvalRequestId], references: [id])
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  @@index([approvalRequestId, stepOrder])
+}
+
+model Task {
+  id                String       @id @default(cuid())
+  title             String
+  description       String?
+  assignedToId      String?
+  assignedById      String
+  departmentId      String?
+  priority          Priority     @default(MEDIUM)
+  status            TaskStatus   @default(TODO)
+  dueDate           DateTime?
+  completedAt       DateTime?
+  requiresApproval  Boolean      @default(false)
+  approvalRequestId String?
+  recurringRule     Json?
+  parentTaskId      String?
+  customerId        String?
+  opportunityId     String?
+  issueId           String?
+  visitId           String?
+  assignedTo        User?        @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  assignedBy        User         @relation("CreatedTasks", fields: [assignedById], references: [id])
+  department        Department?  @relation(fields: [departmentId], references: [id])
+  parentTask        Task?        @relation("SubTasks", fields: [parentTaskId], references: [id])
+  subTasks          Task[]       @relation("SubTasks")
+  customer          CustomerOnboarding? @relation(fields: [customerId], references: [id])
+  opportunity       SalesOpportunity?   @relation(fields: [opportunityId], references: [id])
+  issue             CustomerIssue?      @relation(fields: [issueId], references: [id])
+  visit             ClientVisitNote?    @relation(fields: [visitId], references: [id])
+  attachments       TaskAttachment[]
+  comments          Comment[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime?
+  @@index([assignedToId, status])
+  @@index([departmentId, status])
+  @@index([dueDate])
+  @@index([customerId])
+  @@index([opportunityId])
+  @@index([issueId])
+  @@index([visitId])
+}
+
+model TaskAttachment {
+  id         String   @id @default(cuid())
+  taskId     String
+  documentId String
+  task       Task     @relation(fields: [taskId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([taskId])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  entityType  String
+  entityId    String
+  authorId    String
+  body        String
+  attachments Json?
+  mentions    Json?
+  author      User     @relation(fields: [authorId], references: [id])
+  document    Document? @relation(fields: [documentId], references: [id])
+  documentId  String?
+  task        Task?    @relation(fields: [taskId], references: [id])
+  taskId      String?
+  approval    ApprovalRequest? @relation(fields: [approvalId], references: [id])
+  approvalId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  @@index([entityType, entityId])
+  @@index([authorId])
+}
+
+model Conversation {
+  id           String                    @id @default(cuid())
+  subject      String?
+  participants ConversationParticipant[]
+  messages     Message[]
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  deletedAt    DateTime?
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  lastReadAt     DateTime?
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  attachments    Json?
+  seenAt         DateTime?
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+model Channel {
+  id           String           @id @default(cuid())
+  name         String
+  slug         String           @unique
+  departmentId String?
+  isCompany    Boolean          @default(false)
+  department   Department?      @relation(fields: [departmentId], references: [id])
+  members      ChannelMember[]
+  messages     ChannelMessage[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  deletedAt    DateTime?
+  @@index([departmentId])
+}
+
+model ChannelMember {
+  id        String   @id @default(cuid())
+  channelId String
+  userId    String
+  lastReadAt DateTime?
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+model ChannelMessage {
+  id          String   @id @default(cuid())
+  channelId   String
+  senderId    String
+  body        String
+  attachments Json?
+  mentions    Json?
+  pinnedAt    DateTime?
+  channel     Channel  @relation(fields: [channelId], references: [id])
+  sender      User     @relation(fields: [senderId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  @@index([channelId])
+  @@index([senderId])
+}
+
+model Announcement {
+  id              String               @id @default(cuid())
+  title           String
+  body            String
+  priority        AnnouncementPriority @default(NORMAL)
+  departmentId    String?
+  publishedById   String
+  expiresAt       DateTime?
+  emailNotification Boolean            @default(false)
+  department      Department?          @relation(fields: [departmentId], references: [id])
+  publishedBy     User                 @relation(fields: [publishedById], references: [id])
+  reads           AnnouncementRead[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  deletedAt       DateTime?
+  @@index([departmentId])
+  @@index([priority])
+}
+
+model AnnouncementRead {
+  id             String       @id @default(cuid())
+  announcementId String
+  userId         String
+  readAt         DateTime     @default(now())
+  announcement   Announcement @relation(fields: [announcementId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  @@unique([announcementId, userId])
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String
+  type       NotificationType
+  title      String
+  body       String?
+  entityType String?
+  entityId   String?
+  readAt     DateTime?
+  user       User             @relation(fields: [userId], references: [id])
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  @@index([userId, readAt])
+}
+
+model LeavePolicy {
+  id           String     @id @default(cuid())
+  name         String
+  leaveType    LeaveType
+  annualDays   Int
+  departmentId String?
+  isActive     Boolean    @default(true)
+  department   Department? @relation(fields: [departmentId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+}
+
+model LeaveBalance {
+  id          String    @id @default(cuid())
+  employeeId  String
+  leaveType   LeaveType
+  year        Int
+  allocated   Decimal   @default(0)
+  used        Decimal   @default(0)
+  pending     Decimal   @default(0)
+  employee    User      @relation(fields: [employeeId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  @@unique([employeeId, leaveType, year])
+}
+
+model LeaveRequest {
+  id                String         @id @default(cuid())
+  employeeId         String
+  leaveType          LeaveType
+  startDate          DateTime
+  endDate            DateTime
+  days               Decimal
+  reason             String?
+  status             ApprovalStatus @default(PENDING)
+  approvalRequestId  String?
+  lockedAt           DateTime?
+  employee           User           @relation(fields: [employeeId], references: [id])
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  deletedAt          DateTime?
+  @@index([employeeId, status])
+  @@index([startDate, endDate])
+}
+
+model AttendanceRecord {
+  id          String           @id @default(cuid())
+  employeeId  String
+  date        DateTime
+  checkInAt   DateTime?
+  checkOutAt  DateTime?
+  status      AttendanceStatus @default(PRESENT)
+  notes       String?
+  employee    User             @relation(fields: [employeeId], references: [id])
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+  @@unique([employeeId, date])
+  @@index([date, status])
+}
+
+model OnboardingChecklist {
+  id          String           @id @default(cuid())
+  employeeId  String
+  title       String
+  status      GenericStatus    @default(IN_PROGRESS)
+  employee    User             @relation(fields: [employeeId], references: [id])
+  items       OnboardingItem[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+}
+
+model OnboardingItem {
+  id          String              @id @default(cuid())
+  checklistId String
+  title       String
+  description String?
+  isRequired  Boolean             @default(true)
+  completedAt DateTime?
+  documentId  String?
+  checklist   OnboardingChecklist @relation(fields: [checklistId], references: [id])
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model HRAction {
+  id                  String         @id @default(cuid())
+  employeeId           String
+  actionType           HRActionType
+  reason               String
+  changes              Json?
+  effectiveDate        DateTime
+  createdById          String
+  approvalRequestId    String?
+  supportingDocumentId String?
+  status               ApprovalStatus @default(PENDING)
+  employee             User           @relation("EmployeeHRActions", fields: [employeeId], references: [id])
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  deletedAt            DateTime?
+  @@index([employeeId, actionType])
+}
+
+model Separation {
+  id                 String         @id @default(cuid())
+  employeeId          String
+  type                SeparationType
+  reason              String?
+  exitDate            DateTime
+  clearanceChecklist  Json?
+  assetReturn         Json?
+  finalPaymentStatus  String?
+  exitInterviewNotes  String?
+  finalDocuments      Json?
+  approvalRequestId   String?
+  status              ApprovalStatus @default(PENDING)
+  employee            User           @relation(fields: [employeeId], references: [id])
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  deletedAt           DateTime?
+}
+
+model Remuneration {
+  id            String        @id @default(cuid())
+  employeeId    String
+  baseSalary    Decimal
+  allowances    Json?
+  deductions    Json?
+  netSalary     Decimal
+  currency      String        @default("KES")
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  status        GenericStatus @default(ACTIVE)
+  employee      User          @relation(fields: [employeeId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+  @@index([employeeId, effectiveFrom])
+}
+
+model Payslip {
+  id              String         @id @default(cuid())
+  employeeId       String
+  month            Int
+  year             Int
+  grossPay         Decimal
+  totalDeductions  Decimal
+  netPay           Decimal
+  generatedById    String
+  documentUrl      String?
+  approvalStatus   ApprovalStatus @default(PENDING)
+  lockedAt         DateTime?
+  employee         User           @relation("EmployeePayslips", fields: [employeeId], references: [id])
+  generatedBy      User           @relation("GeneratedPayslips", fields: [generatedById], references: [id])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  deletedAt        DateTime?
+  @@unique([employeeId, month, year])
+}
+
+model FinanceRequest {
+  id                     String             @id @default(cuid())
+  requestedById           String
+  departmentId            String?
+  type                    FinanceRequestType
+  title                   String
+  description             String?
+  amount                  Decimal
+  currency                String             @default("KES")
+  status                  FinanceRequestStatus @default(DRAFT)
+  approvalRequestId       String?
+  receiptDocumentId       String?
+  paymentProofDocumentId  String?
+  paidAt                  DateTime?
+  lockedAt                DateTime?
+  financeNotes            String?
+  requestedBy             User               @relation(fields: [requestedById], references: [id])
+  department              Department?         @relation(fields: [departmentId], references: [id])
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  deletedAt               DateTime?
+  @@index([requestedById, status])
+  @@index([departmentId, status])
+}
+
+model Budget {
+  id           String     @id @default(cuid())
+  departmentId String
+  year         Int
+  month        Int?
+  amount       Decimal
+  currency     String     @default("KES")
+  spent        Decimal    @default(0)
+  department   Department @relation(fields: [departmentId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+  @@index([departmentId, year, month])
+}
+
+model CustomerOnboarding {
+  id                                 String             @id @default(cuid())
+  businessName                       String
+  businessType                       BusinessType
+  registrationNumber                 String?
+  kraPin                             String?
+  taxComplianceCertificateNumber      String?
+  taxComplianceExpiryDate            DateTime?
+  licenseNumber                      String?
+  licenseExpiryDate                  DateTime?
+  ppbLicenseNumber                   String?
+  ppbLicenseExpiryDate               DateTime?
+  businessPermitNumber               String?
+  businessPermitExpiryDate           DateTime?
+  contactPersonName                  String?
+  contactPersonRole                  String?
+  contactEmail                       String?
+  contactPhone                       String?
+  alternatePhone                     String?
+  superintendentPharmacistName       String?
+  superintendentPharmacistRegistrationNumber String?
+  pharmacistPhone                    String?
+  pharmacistEmail                    String?
+  county                             String?
+  town                               String?
+  physicalAddress                    String?
+  buildingName                       String?
+  street                             String?
+  gpsLocation                        String?
+  deliveryAddress                    String?
+  location                           String?
+  address                            String?
+  complianceRiskLevel                ComplianceRiskLevel?
+  dueDiligenceStatus                 DueDiligenceStatus?
+  inspectionRequired                 Boolean            @default(false)
+  blacklistStatus                    CustomerBlacklistStatus @default(CLEAR)
+  accountStatus                      CustomerAccountStatus   @default(PENDING_APPROVAL)
+  complianceNotes                    String?
+  paymentTerms                       PaymentTerms?
+  creditLimit                        Decimal?
+  creditDays                         Int?
+  outstandingBalance                 Decimal?
+  paymentDelayFlag                   Boolean            @default(false)
+  blockedForCredit                   Boolean            @default(false)
+  preferredDeliverySchedule          String?
+  preferredOrderChannel              String?
+  customerCategory                   CustomerCategory?
+  accountTier                        AccountTier?
+  isKeyAccount                       Boolean            @default(false)
+  accountOwnerId                     String?
+  territoryId                        String?
+  lastVisitDate                      DateTime?
+  nextFollowUpDate                   DateTime?
+  customerHealthStatus               CustomerHealthStatus?
+  purchaseAuthorizationRequired      Boolean            @default(false)
+  status                             CustomerStatus     @default(DRAFT)
+  assignedOfficerId                  String?
+  notes                              String?
+  rejectionReason                    String?
+  reviewChecklist                    Json?
+  lockedAt                           DateTime?
+  assignedOfficer                    User?              @relation(fields: [assignedOfficerId], references: [id])
+  accountOwner                       User?              @relation("CustomerAccountOwner", fields: [accountOwnerId], references: [id])
+  territory                          SalesTerritory?    @relation(fields: [territoryId], references: [id])
+  accountNotes                       CustomerAccountNote[]
+  opportunities                      SalesOpportunity[]
+  productFeedback                    ProductFeedback[]
+  issues                             CustomerIssue[]
+  discountRequests                   DiscountRequest[]
+  alerts                             CustomerAlert[]
+  tasks                              Task[]
+  routeStops                         VisitRouteStop[]
+  clientVisits                       ClientVisitNote[]
+  createdAt                          DateTime           @default(now())
+  updatedAt                          DateTime           @updatedAt
+  deletedAt                          DateTime?
+  @@index([status])
+  @@index([assignedOfficerId])
+  @@index([accountOwnerId])
+  @@index([territoryId])
+  @@index([customerHealthStatus])
+  @@index([blacklistStatus])
+}
+
+model SalesReport {
+  id          String        @id @default(cuid())
+  title       String
+  periodStart DateTime?
+  periodEnd   DateTime?
+  body        String?
+  documentId  String?
+  territoryId String?
+  createdById String
+  status      GenericStatus @default(SUBMITTED)
+  territory   SalesTerritory? @relation(fields: [territoryId], references: [id])
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  @@index([territoryId])
+}
+
+model ClientVisitNote {
+  id               String    @id @default(cuid())
+  clientName       String
+  visitDate        DateTime
+  notes            String
+  followUpAt       DateTime?
+  purpose          String?
+  outcome          String?
+  nextAction       String?
+  nextFollowUpDate DateTime?
+  customerId       String?
+  territoryId      String?
+  routeStopId      String?
+  attachments      Json?
+  geoLocation      String?
+  visitType        VisitType?
+  createdById      String
+  createdBy        User      @relation(fields: [createdById], references: [id])
+  customer         CustomerOnboarding? @relation(fields: [customerId], references: [id])
+  territory        SalesTerritory?     @relation(fields: [territoryId], references: [id])
+  routeStop        VisitRouteStop?     @relation("RouteStopVisit")
+  tasks            Task[]
+  productFeedback  ProductFeedback[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  @@index([customerId])
+  @@index([territoryId])
+  @@index([routeStopId])
+  @@index([visitDate])
+}
+
+model SalesTerritory {
+  id                String          @id @default(cuid())
+  name              String
+  region            String?
+  county            String?
+  towns             String[]
+  assignedOfficerId String?
+  description       String?
+  status            TerritoryStatus @default(ACTIVE)
+  assignedOfficer   User?           @relation("TerritoryOfficer", fields: [assignedOfficerId], references: [id])
+  customers         CustomerOnboarding[]
+  clientVisits      ClientVisitNote[]
+  salesReports      SalesReport[]
+  routes            VisitRoute[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
+  @@index([assignedOfficerId, status])
+  @@index([name])
+}
+
+model VisitRoute {
+  id                String           @id @default(cuid())
+  title             String
+  assignedOfficerId String
+  territoryId       String
+  routeDate         DateTime
+  status            VisitRouteStatus @default(PLANNED)
+  notes             String?
+  assignedOfficer   User             @relation("VisitRouteOfficer", fields: [assignedOfficerId], references: [id])
+  territory         SalesTerritory   @relation(fields: [territoryId], references: [id])
+  stops             VisitRouteStop[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+  @@index([assignedOfficerId, routeDate])
+  @@index([territoryId, routeDate])
+  @@index([status])
+}
+
+model VisitRouteStop {
+  id         String              @id @default(cuid())
+  routeId    String
+  customerId String
+  plannedTime DateTime?
+  visitOrder Int
+  status     VisitRouteStopStatus @default(PLANNED)
+  visitId    String?             @unique
+  notes      String?
+  route      VisitRoute          @relation(fields: [routeId], references: [id])
+  customer   CustomerOnboarding  @relation(fields: [customerId], references: [id])
+  visit      ClientVisitNote?    @relation("RouteStopVisit", fields: [visitId], references: [id])
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  @@unique([routeId, visitOrder])
+  @@index([routeId, status])
+  @@index([customerId])
+}
+
+model CustomerAccountNote {
+  id          String        @id @default(cuid())
+  customerId  String
+  createdById String
+  note        String
+  noteType    AccountNoteType @default(GENERAL)
+  customer    CustomerOnboarding @relation(fields: [customerId], references: [id])
+  createdBy   User          @relation("CustomerAccountNoteAuthor", fields: [createdById], references: [id])
+  createdAt   DateTime      @default(now())
+  @@index([customerId, createdAt])
+  @@index([createdById])
+}
+
+model SalesOpportunity {
+  id                 String           @id @default(cuid())
+  customerId         String
+  ownerId            String
+  title              String
+  description        String?
+  stage              OpportunityStage @default(PROSPECTING)
+  expectedValue      Decimal?
+  currency           String           @default("KES")
+  expectedOrderDate  DateTime?
+  competitorInvolved Boolean          @default(false)
+  competitorName     String?
+  lossReason         String?
+  probability        Int?
+  status             OpportunityStatus @default(OPEN)
+  customer           CustomerOnboarding @relation(fields: [customerId], references: [id])
+  owner              User             @relation("SalesOpportunityOwner", fields: [ownerId], references: [id])
+  tasks              Task[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  deletedAt          DateTime?
+  @@index([customerId, status])
+  @@index([ownerId, stage])
+  @@index([expectedOrderDate])
+}
+
+model ProductFeedback {
+  id             String              @id @default(cuid())
+  customerId     String?
+  submittedById  String
+  productName    String
+  productCategory String?
+  feedbackType   ProductFeedbackType
+  description    String
+  severity       Priority            @default(MEDIUM)
+  status         ProductFeedbackStatus @default(OPEN)
+  relatedVisitId String?
+  customer       CustomerOnboarding? @relation(fields: [customerId], references: [id])
+  submittedBy    User                @relation("ProductFeedbackSubmitter", fields: [submittedById], references: [id])
+  relatedVisit   ClientVisitNote?    @relation(fields: [relatedVisitId], references: [id])
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  deletedAt      DateTime?
+  @@index([customerId, status])
+  @@index([feedbackType, severity])
+  @@index([relatedVisitId])
+}
+
+model CustomerIssue {
+  id                   String               @id @default(cuid())
+  customerId           String
+  reportedById         String
+  assignedToId         String?
+  title                String
+  description          String
+  issueType            IssueType
+  severity             Priority             @default(MEDIUM)
+  status               IssueStatus          @default(OPEN)
+  escalationDepartment EscalationDepartment?
+  slaDueAt             DateTime?
+  resolvedAt           DateTime?
+  resolutionNotes      String?
+  customer             CustomerOnboarding   @relation(fields: [customerId], references: [id])
+  reportedBy           User                 @relation("CustomerIssueReporter", fields: [reportedById], references: [id])
+  assignedTo           User?                @relation("CustomerIssueAssignee", fields: [assignedToId], references: [id])
+  tasks                Task[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  deletedAt            DateTime?
+  @@index([customerId, status])
+  @@index([assignedToId, status])
+  @@index([slaDueAt])
+}
+
+model DiscountRequest {
+  id                String              @id @default(cuid())
+  customerId        String
+  requestedById     String
+  reason            String
+  standardPrice     Decimal
+  requestedPrice    Decimal
+  discountPercent   Decimal
+  estimatedValue    Decimal?
+  currency          String              @default("KES")
+  approvalRequired  Boolean             @default(true)
+  status            DiscountRequestStatus @default(DRAFT)
+  approvalRequestId String?
+  customer          CustomerOnboarding  @relation(fields: [customerId], references: [id])
+  requestedBy       User                @relation("DiscountRequestRequester", fields: [requestedById], references: [id])
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  deletedAt         DateTime?
+  @@index([customerId, status])
+  @@index([requestedById, status])
+  @@index([approvalRequestId])
+}
+
+model CustomerAlert {
+  id          String            @id @default(cuid())
+  customerId  String
+  alertType   CustomerAlertType
+  title       String
+  description String
+  severity    Priority          @default(MEDIUM)
+  dueDate     DateTime?
+  status      CustomerAlertStatus @default(OPEN)
+  customer    CustomerOnboarding @relation(fields: [customerId], references: [id])
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+  @@index([customerId, status])
+  @@index([alertType, dueDate])
+}
+
+model ComplaintEscalation {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  severity    Priority      @default(MEDIUM)
+  status      GenericStatus @default(OPEN)
+  ownerId     String?
+  documentId  String?
+  owner       User?         @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+}
+
+model ComplianceItem {
+  id           String         @id @default(cuid())
+  title        String
+  type         ComplianceType
+  description  String?
+  ownerId      String?
+  departmentId String?
+  status       GenericStatus  @default(OPEN)
+  dueDate      DateTime?
+  expiryDate   DateTime?
+  documentId   String?
+  priority     Priority       @default(MEDIUM)
+  owner        User?          @relation(fields: [ownerId], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+  @@index([type, status])
+  @@index([expiryDate])
+}
+
+model RiskRegister {
+  id             String         @id @default(cuid())
+  title          String
+  description    String?
+  likelihood     RiskLikelihood
+  impact         RiskImpact
+  severity       Priority
+  mitigationPlan String?
+  ownerId        String?
+  status         GenericStatus  @default(OPEN)
+  owner          User?          @relation(fields: [ownerId], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+}
+
+model IncidentReport {
+  id              String        @id @default(cuid())
+  title           String
+  description     String
+  reportedById    String
+  severity        Priority
+  status          GenericStatus @default(OPEN)
+  resolutionNotes String?
+  documentId      String?
+  reportedBy      User          @relation(fields: [reportedById], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+}
+
+model PolicyAcknowledgement {
+  id               String   @id @default(cuid())
+  policyDocumentId String
+  userId           String
+  acknowledgedAt   DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  @@unique([policyDocumentId, userId])
+}
+
+model Requisition {
+  id                String         @id @default(cuid())
+  requestedById      String
+  departmentId       String?
+  title              String
+  description        String?
+  estimatedAmount    Decimal?
+  priority           Priority       @default(MEDIUM)
+  status             RequisitionStatus @default(DRAFT)
+  approvalRequestId  String?
+  documents          Json?
+  lockedAt           DateTime?
+  requestedBy        User           @relation(fields: [requestedById], references: [id])
+  department         Department?    @relation(fields: [departmentId], references: [id])
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  deletedAt          DateTime?
+}
+
+model VendorDocument {
+  id           String   @id @default(cuid())
+  vendorName   String
+  documentType String
+  documentId   String
+  expiryDate   DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+  @@index([vendorName])
+  @@index([expiryDate])
+}
+
+model Training {
+  id           String                @id @default(cuid())
+  title        String
+  description  String?
+  trainingDate DateTime?
+  trainerName  String?
+  trainingType TrainingType
+  departmentId String?
+  createdById  String
+  createdBy    User                  @relation("TrainingCreator", fields: [createdById], references: [id])
+  participants TrainingParticipant[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  deletedAt    DateTime?
+}
+
+model TrainingParticipant {
+  id            String         @id @default(cuid())
+  trainingId    String
+  employeeId    String
+  status        TrainingStatus @default(ASSIGNED)
+  attendedAt    DateTime?
+  completedAt   DateTime?
+  certificateDocumentId String?
+  training      Training       @relation(fields: [trainingId], references: [id])
+  employee      User           @relation(fields: [employeeId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  @@unique([trainingId, employeeId])
+}
+
+model PerformanceReview {
+  id             String            @id @default(cuid())
+  employeeId      String
+  reviewerId      String?
+  cycleName       String
+  periodStart     DateTime
+  periodEnd       DateTime
+  selfReview      Json?
+  managerReview   Json?
+  goals           Json?
+  score           Decimal?
+  rating          String?
+  recommendation  String?
+  status          PerformanceStatus @default(NOT_STARTED)
+  supportingDocs  Json?
+  approvalRequestId String?
+  lockedAt        DateTime?
+  employee        User              @relation("EmployeeReviews", fields: [employeeId], references: [id])
+  reviewer        User?             @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
+  @@index([employeeId, status])
+  @@index([reviewerId])
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  actorId    String?
+  action     AuditAction
+  entityType String
+  entityId   String?
+  oldValues  Json?
+  newValues  Json?
+  ipAddress  String?
+  userAgent  String?
+  actor      User?       @relation(fields: [actorId], references: [id])
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model Setting {
+  id             String           @id @default(cuid())
+  organizationId String
+  section        String
+  key            String
+  scopeType      SettingScopeType @default(ORGANIZATION)
+  scopeKey       String           @default("GLOBAL")
+  value          Json
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  @@unique([organizationId, section, key, scopeType, scopeKey])
+  @@index([organizationId, section])
+  @@index([scopeType, scopeKey])
+}

@@ -1,0 +1,35 @@
+const complianceService = require('../services/complianceService');
+const asyncHandler = require('../utils/asyncHandler');
+const { success } = require('../utils/responses');
+
+module.exports = {
+  listSalesReports: asyncHandler(async (req, res) => success(res, 'Sales reports', await complianceService.listModel('salesReport', req.auth, req.query, { createdBy: { select: { id: true, fullName: true } } }))),
+  createSalesReport: asyncHandler(async (req, res) => success(res, 'Sales report created', await complianceService.createSalesReport(req.auth, req.body, req), 201)),
+  getSalesReport: asyncHandler(async (req, res) => success(res, 'Sales report', await complianceService.getModelDetail('salesReport', req.auth, req.params.id))),
+  updateSalesReport: asyncHandler(async (req, res) => success(res, 'Sales report updated', await complianceService.updateSalesReport(req.auth, req.params.id, req.body, req))),
+  listClientVisits: asyncHandler(async (req, res) => success(res, 'Client visit notes', await complianceService.listModel('clientVisitNote', req.auth, req.query, { createdBy: { select: { id: true, fullName: true } } }))),
+  createClientVisit: asyncHandler(async (req, res) => success(res, 'Client visit note created', await complianceService.createClientVisit(req.auth, req.body, req), 201)),
+  getClientVisit: asyncHandler(async (req, res) => success(res, 'Client visit note', await complianceService.getModelDetail('clientVisitNote', req.auth, req.params.id))),
+  updateClientVisit: asyncHandler(async (req, res) => success(res, 'Client visit note updated', await complianceService.updateClientVisit(req.auth, req.params.id, req.body, req))),
+  listComplaints: asyncHandler(async (req, res) => success(res, 'Complaint escalations', await complianceService.listModel('complaintEscalation', req.auth, req.query, { owner: { select: { id: true, fullName: true } } }))),
+  createComplaint: asyncHandler(async (req, res) => success(res, 'Complaint escalation created', await complianceService.createComplaint(req.auth, req.body, req), 201)),
+  getComplaint: asyncHandler(async (req, res) => success(res, 'Complaint escalation', await complianceService.getModelDetail('complaintEscalation', req.auth, req.params.id))),
+  updateComplaint: asyncHandler(async (req, res) => success(res, 'Complaint escalation updated', await complianceService.updateComplaint(req.auth, req.params.id, req.body, req))),
+  updateComplaintStatus: asyncHandler(async (req, res) => success(res, 'Complaint escalation updated', await complianceService.updateComplaintStatus(req.auth, req.params.id, req.body.status, req.body.resolutionNotes, req))),
+  listComplianceItems: asyncHandler(async (req, res) => success(res, 'Compliance items', await complianceService.listModel('complianceItem', req.auth, req.query, { owner: { select: { id: true, fullName: true } } }))),
+  getComplianceItem: asyncHandler(async (req, res) => success(res, 'Compliance item', await complianceService.getComplianceItem(req.auth, req.params.id))),
+  createComplianceItem: asyncHandler(async (req, res) => success(res, 'Compliance item created', await complianceService.createComplianceItem(req.auth, req.body, req), 201)),
+  updateComplianceStatus: asyncHandler(async (req, res) => success(res, 'Compliance item updated', await complianceService.updateComplianceStatus(req.auth, req.params.id, req.body.status, req))),
+  listRisks: asyncHandler(async (req, res) => success(res, 'Risk register', await complianceService.listModel('riskRegister', req.auth, req.query, { owner: { select: { id: true, fullName: true } } }))),
+  createRisk: asyncHandler(async (req, res) => success(res, 'Risk created', await complianceService.createRisk(req.auth, req.body, req), 201)),
+  getRisk: asyncHandler(async (req, res) => success(res, 'Risk', await complianceService.getModelDetail('riskRegister', req.auth, req.params.id))),
+  updateRisk: asyncHandler(async (req, res) => success(res, 'Risk updated', await complianceService.updateRisk(req.auth, req.params.id, req.body, req))),
+  listIncidents: asyncHandler(async (req, res) => success(res, 'Incident reports', await complianceService.listModel('incidentReport', req.auth, req.query, { reportedBy: { select: { id: true, fullName: true } } }))),
+  createIncident: asyncHandler(async (req, res) => success(res, 'Incident report created', await complianceService.createIncident(req.auth, req.body, req), 201)),
+  getIncident: asyncHandler(async (req, res) => success(res, 'Incident report', await complianceService.getModelDetail('incidentReport', req.auth, req.params.id))),
+  updateIncidentStatus: asyncHandler(async (req, res) => success(res, 'Incident report updated', await complianceService.updateIncidentStatus(req.auth, req.params.id, req.body.status, req.body.resolutionNotes, req))),
+  listPolicies: asyncHandler(async (req, res) => success(res, 'Policy acknowledgements', await complianceService.listModel('policyAcknowledgement', req.auth, req.query, { user: { select: { id: true, fullName: true } } }))),
+  getPolicySummary: asyncHandler(async (req, res) => success(res, 'Policy summary', await complianceService.getPolicySummary(req.auth, req.params.id))),
+  assignPolicy: asyncHandler(async (req, res) => success(res, 'Policy acknowledgement assigned', await complianceService.assignPolicy(req.auth, req.body, req), 201)),
+  acknowledgePolicy: asyncHandler(async (req, res) => success(res, 'Policy acknowledged', await complianceService.acknowledgePolicy(req.auth, req.params.id, req)))
+};
