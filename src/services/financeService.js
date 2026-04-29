@@ -647,6 +647,159 @@ const financeService = {
     return { summary, byStatus, departmentBudgetUsage: budgets };
   },
 
+  async getEnterpriseFinanceSummary(auth, query = {}) {
+    if (!accessControlService.isGeneralManager(auth) && !accessControlService.isFinance(auth)) {
+      throw new AppError('You do not have access to finance summary data', 403);
+    }
+
+    const where = { deletedAt: null };
+    if (query.departmentId) where.departmentId = query.departmentId;
+    if (query.dateFrom || query.dateTo) {
+      where.createdAt = {};
+      if (query.dateFrom) where.createdAt.gte = new Date(query.dateFrom);
+      if (query.dateTo) where.createdAt.lte = new Date(query.dateTo);
+    }
+
+    const [totals, byStatus, byDepartment] = await prisma.$transaction([
+      prisma.financeRequest.aggregate({
+        where,
+        _sum: { amount: true },
+        _count: true
+      }),
+      prisma.financeRequest.groupBy({
+        by: ['status'],
+        where,
+        _sum: { amount: true },
+        _count: true
+      }),
+      prisma.financeRequest.groupBy({
+        by: ['departmentId'],
+        where,
+        _sum: { amount: true },
+        _count: true
+      })
+    ]);
+
+    const [departmentRows, payablesDue, receivablesOutstanding] = await Promise.all([
+      prisma.department.findMany({
+        where: { id: { in: byDepartment.map((item) => item.departmentId).filter(Boolean) } },
+        select: safeDepartmentSelect
+      }),
+      prisma.financeRequest.aggregate({
+        where: {
+          ...where,
+          status: { in: ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'] }
+        },
+        _sum: { amount: true }
+      }),
+      prisma.financeRequest.aggregate({
+        where: {
+          ...where,
+          status: { in: ['PAID'] }
+        },
+        _sum: { amount: true }
+      })
+    ]);
+
+    const departmentMap = new Map(departmentRows.map((department) => [department.id, department]));
+
+    const departmentBreakdown = byDepartment.map((entry) => ({
+      departmentId: entry.departmentId,
+      departmentName: departmentMap.get(entry.departmentId)?.name || 'Unassigned',
+      totalAmount: Number(entry._sum.amount || 0),
+      requestCount: typeof entry._count === 'number' ? entry._count : Object.values(entry._count || {}).find((value) => typeof value === 'number') || 0
+    }));
+
+    const totalRevenue = Number(receivablesOutstanding._sum.amount || 0);
+    const totalExpenses = Number(payablesDue._sum.amount || 0);
+    const netPosition = totalRevenue - totalExpenses;
+
+    return {
+      totalRevenue,
+      totalExpenses,
+      payablesDue: totalExpenses,
+      receivablesOutstanding: totalRevenue,
+      netPosition,
+      departmentBreakdown,
+      totals,
+      byStatus
+    };
+  },
+
+  async listEnterprisePayables(auth, query = {}) {
+    if (!accessControlService.isGeneralManager(auth) && !accessControlService.isFinance(auth)) {
+      throw new AppError('You do not have access to payables data', 403);
+    }
+
+    const where = {
+      deletedAt: null,
+      status: { in: ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'] }
+    };
+    if (query.departmentId) where.departmentId = query.departmentId;
+    if (query.dateFrom || query.dateTo) {
+      where.createdAt = {};
+      if (query.dateFrom) where.createdAt.gte = new Date(query.dateFrom);
+      if (query.dateTo) where.createdAt.lte = new Date(query.dateTo);
+    }
+    if (query.search) {
+      where.OR = [
+        { title: { contains: String(query.search), mode: 'insensitive' } },
+        { description: { contains: String(query.search), mode: 'insensitive' } }
+      ];
+    }
+
+    const { page, limit, skip, sortBy, sortOrder } = parsePagination(query);
+    const [items, total] = await prisma.$transaction([
+      prisma.financeRequest.findMany({
+        where,
+        include: financeRequestListInclude,
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder }
+      }),
+      prisma.financeRequest.count({ where })
+    ]);
+
+    return paginated(items, total, page, limit);
+  },
+
+  async listEnterpriseReceivables(auth, query = {}) {
+    if (!accessControlService.isGeneralManager(auth) && !accessControlService.isFinance(auth)) {
+      throw new AppError('You do not have access to receivables data', 403);
+    }
+
+    const where = {
+      deletedAt: null,
+      status: { in: ['PAID'] }
+    };
+    if (query.departmentId) where.departmentId = query.departmentId;
+    if (query.dateFrom || query.dateTo) {
+      where.paidAt = {};
+      if (query.dateFrom) where.paidAt.gte = new Date(query.dateFrom);
+      if (query.dateTo) where.paidAt.lte = new Date(query.dateTo);
+    }
+    if (query.search) {
+      where.OR = [
+        { title: { contains: String(query.search), mode: 'insensitive' } },
+        { description: { contains: String(query.search), mode: 'insensitive' } }
+      ];
+    }
+
+    const { page, limit, skip, sortBy, sortOrder } = parsePagination(query);
+    const [items, total] = await prisma.$transaction([
+      prisma.financeRequest.findMany({
+        where,
+        include: financeRequestListInclude,
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder }
+      }),
+      prisma.financeRequest.count({ where })
+    ]);
+
+    return paginated(items, total, page, limit);
+  },
+
   async accountsSummary(auth) {
     if (!accessControlService.isGeneralManager(auth) && !accessControlService.isFinance(auth)) {
       throw new AppError('You do not have access to accounts records', 403);

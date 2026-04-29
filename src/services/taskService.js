@@ -185,6 +185,11 @@ const taskService = {
 
   async create(data, auth, req) {
     if (!data.assignedToId && !data.departmentId) throw new AppError('A task must be assigned to a user or department', 400);
+    const {
+      attachmentDocumentIds = [],
+      mentions = [],
+      ...taskData
+    } = data || {};
     const assignee = data.assignedToId ? await prisma.user.findUnique({ where: { id: data.assignedToId }, include: { role: true } }) : null;
     if (assignee?.role?.name === ROLES.GENERAL_MANAGER && !accessControlService.isGeneralManager(auth)) {
       throw new AppError('Only General Manager can assign tasks directly to General Manager', 403);
@@ -196,13 +201,13 @@ const taskService = {
     const task = await prisma.$transaction(async (tx) => {
       const created = await tx.task.create({
         data: {
-          ...data,
+          ...taskData,
           assignedById: auth.userId
         },
         include: baseInclude
       });
-      if (data.attachmentDocumentIds?.length) {
-        await tx.taskAttachment.createMany({ data: data.attachmentDocumentIds.map((documentId) => ({ taskId: created.id, documentId })) });
+      if (attachmentDocumentIds.length) {
+        await tx.taskAttachment.createMany({ data: attachmentDocumentIds.map((documentId) => ({ taskId: created.id, documentId })) });
       }
       await auditService.log({ actorId: auth.userId, action: AUDIT_ACTIONS.TASK_CREATED, entityType: 'Task', entityId: created.id, newValues: created, req }, tx);
       return created;
@@ -210,8 +215,8 @@ const taskService = {
     if (task.assignedToId) {
       await notificationService.create({ userId: task.assignedToId, type: 'TASK_ASSIGNED', title: task.title, body: task.description, entityType: 'Task', entityId: task.id });
     }
-    if (data.mentions?.length) {
-      await notificationService.createMany(data.mentions, { type: 'MENTION', title: `Mentioned in task ${task.title}`, body: task.description, entityType: 'Task', entityId: task.id });
+    if (mentions.length) {
+      await notificationService.createMany(mentions, { type: 'MENTION', title: `Mentioned in task ${task.title}`, body: task.description, entityType: 'Task', entityId: task.id });
     }
     return this.get(task.id, auth);
   },

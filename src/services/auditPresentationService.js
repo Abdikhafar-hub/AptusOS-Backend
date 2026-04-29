@@ -44,7 +44,10 @@ const CATEGORY_ACTIONS = Object.freeze({
     AUDIT_ACTIONS.FINANCE_REQUEST_CREATED,
     AUDIT_ACTIONS.FINANCE_REQUEST_UPDATED,
     AUDIT_ACTIONS.FINANCE_REQUEST_PAID,
-    AUDIT_ACTIONS.PAYROLL_UPDATED
+    AUDIT_ACTIONS.PAYROLL_UPDATED,
+    AUDIT_ACTIONS.CONTRACT_CREATED,
+    AUDIT_ACTIONS.CONTRACT_UPDATED,
+    AUDIT_ACTIONS.CONTRACT_DELETED
   ],
   [AUDIT_CATEGORIES.OPERATIONS]: [
     AUDIT_ACTIONS.TASK_CREATED,
@@ -58,7 +61,16 @@ const CATEGORY_ACTIONS = Object.freeze({
     AUDIT_ACTIONS.APPROVAL_APPROVED,
     AUDIT_ACTIONS.APPROVAL_REJECTED,
     AUDIT_ACTIONS.COMPLIANCE_UPDATED,
-    AUDIT_ACTIONS.SETTINGS_UPDATED
+    AUDIT_ACTIONS.SETTINGS_UPDATED,
+    AUDIT_ACTIONS.ESCALATION_CREATED,
+    AUDIT_ACTIONS.ESCALATION_RESOLVED,
+    AUDIT_ACTIONS.GOVERNANCE_SETTING_UPDATED,
+    AUDIT_ACTIONS.GM_REPORT_RUN
+  ],
+  [AUDIT_CATEGORIES.OTHER]: [
+    AUDIT_ACTIONS.DELEGATION_CREATED,
+    AUDIT_ACTIONS.DELEGATION_UPDATED,
+    AUDIT_ACTIONS.DELEGATION_REVOKED
   ]
 });
 
@@ -123,6 +135,26 @@ function resolveActionLabel(entry) {
       return 'Uploaded document';
     case AUDIT_ACTIONS.LEAVE_CREATED_FOR_STAFF:
       return 'Created staff leave';
+    case AUDIT_ACTIONS.ESCALATION_CREATED:
+      return 'Escalation raised';
+    case AUDIT_ACTIONS.ESCALATION_RESOLVED:
+      return 'Escalation resolved';
+    case AUDIT_ACTIONS.GOVERNANCE_SETTING_UPDATED:
+      return 'Governance setting updated';
+    case AUDIT_ACTIONS.CONTRACT_CREATED:
+      return 'Contract created';
+    case AUDIT_ACTIONS.CONTRACT_UPDATED:
+      return 'Contract updated';
+    case AUDIT_ACTIONS.CONTRACT_DELETED:
+      return 'Contract archived';
+    case AUDIT_ACTIONS.DELEGATION_CREATED:
+      return 'Delegation created';
+    case AUDIT_ACTIONS.DELEGATION_UPDATED:
+      return 'Delegation updated';
+    case AUDIT_ACTIONS.DELEGATION_REVOKED:
+      return 'Delegation revoked';
+    case AUDIT_ACTIONS.GM_REPORT_RUN:
+      return 'Enterprise report run';
     default:
       return titleCaseFromConstant(entry.action);
   }

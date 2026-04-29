@@ -4,6 +4,7 @@ const { success } = require('../utils/responses');
 
 module.exports = {
   listRequisitions: asyncHandler(async (req, res) => success(res, 'Requisitions', await operationsService.listRequisitions(req.auth, req.query))),
+  getRequisitionBudgetAvailability: asyncHandler(async (req, res) => success(res, 'Requisition budget availability', await operationsService.getRequisitionBudgetAvailability(req.auth, req.query))),
   getRequisition: asyncHandler(async (req, res) => success(res, 'Requisition', await operationsService.getRequisition(req.auth, req.params.id))),
   createRequisition: asyncHandler(async (req, res) => success(res, 'Requisition created', await operationsService.createRequisition(req.auth, req.body, req), 201)),
   reviewRequisition: asyncHandler(async (req, res) => success(res, 'Requisition updated', await operationsService.reviewRequisition(req.auth, req.params.id, req.body.decision, req.body.comment, req))),

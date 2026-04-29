@@ -1,0 +1,15 @@
+-- Extend ContractType enum
+ALTER TYPE "ContractType" ADD VALUE IF NOT EXISTS 'SUPPLIER';
+ALTER TYPE "ContractType" ADD VALUE IF NOT EXISTS 'SERVICE_AGREEMENT';
+ALTER TYPE "ContractType" ADD VALUE IF NOT EXISTS 'LEASE';
+ALTER TYPE "ContractType" ADD VALUE IF NOT EXISTS 'MOU';
+
+-- Extend ContractStatus enum
+ALTER TYPE "ContractStatus" ADD VALUE IF NOT EXISTS 'UNDER_REVIEW';
+ALTER TYPE "ContractStatus" ADD VALUE IF NOT EXISTS 'PENDING_APPROVAL';
+ALTER TYPE "ContractStatus" ADD VALUE IF NOT EXISTS 'RENEWED';
+
+-- Expand Contract table for enterprise workflow metadata
+ALTER TABLE "Contract"
+  ADD COLUMN IF NOT EXISTS "category" TEXT,
+  ADD COLUMN IF NOT EXISTS "metadata" JSONB;

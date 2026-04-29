@@ -508,6 +508,113 @@ enum RequisitionStatus {
   CANCELLED
 }
 
+enum RequisitionCategory {
+  GOODS
+  SERVICES
+  MAINTENANCE
+  IT_EQUIPMENT
+  OFFICE_SUPPLIES
+  MEDICAL_CLINICAL_SUPPLIES
+  LOGISTICS
+  EMERGENCY_PROCUREMENT
+  OTHER
+}
+
+enum RequisitionRequestType {
+  NEW_PURCHASE
+  REPLACEMENT
+  REPAIR
+  RENEWAL
+  SERVICE_CONTRACT
+}
+
+enum RequisitionFundingSource {
+  DEPARTMENT_BUDGET
+  PROJECT_BUDGET
+  EMERGENCY_FUND
+  OTHER
+}
+
+enum RequisitionExpenditureType {
+  CAPEX
+  OPEX
+}
+
+enum RequisitionApprovalRoute {
+  AUTO
+  MANUAL
+}
+
+enum RequisitionAttachmentType {
+  SUPPLIER_QUOTATION
+  SPECIFICATION_DOCUMENT
+  APPROVAL_MEMO
+  PREVIOUS_INVOICE_RECEIPT
+  EMERGENCY_JUSTIFICATION
+  OTHER
+}
+
+enum LogisticsTaskType {
+  SHIPMENT_HANDLING
+  CUSTOMS_CLEARANCE
+  WAREHOUSE_OPERATION
+  TRANSPORT_DELIVERY
+  COLD_CHAIN_MONITORING
+  INVENTORY_MOVEMENT
+  VENDOR_COORDINATION
+  COMPLIANCE_INSPECTION
+  EMERGENCY_RESPONSE
+}
+
+enum LogisticsTransportMode {
+  AIR
+  SEA
+  ROAD
+  MULTI_MODAL
+}
+
+enum LogisticsTaskStatus {
+  PENDING
+  IN_PROGRESS
+  AWAITING_CLEARANCE
+  IN_TRANSIT
+  DELAYED
+  COMPLETED
+  FAILED
+}
+
+enum LogisticsMilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+  MISSED
+}
+
+enum LogisticsTaskDocumentType {
+  CUSTOMS_DOCUMENT
+  INVOICE
+  PACKING_LIST
+  BILL_OF_LADING_AIRWAY_BILL
+  CLEARANCE_CERTIFICATE
+  INSPECTION_REPORT
+  OTHER
+}
+
+enum LogisticsDependencyBlockerType {
+  DOCUMENT_MISSING
+  APPROVAL_PENDING
+  SHIPMENT_DELAY
+  OTHER
+}
+
+enum LogisticsRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 enum RiskLikelihood {
   LOW
   MEDIUM
@@ -561,6 +668,10 @@ enum NotificationType {
   ANNOUNCEMENT_PUBLISHED
   TRAINING_ASSIGNED
   PERFORMANCE_REVIEW_REQUESTED
+  ESCALATION_CREATED
+  ESCALATION_RESOLVED
+  CONTRACT_EXPIRY_WARNING
+  GOVERNANCE_UPDATED
   SYSTEM
 }
 
@@ -610,6 +721,83 @@ enum AuditAction {
   DEPARTMENT_CHANGED
   COMPLIANCE_UPDATED
   SETTINGS_UPDATED
+  ESCALATION_CREATED
+  ESCALATION_RESOLVED
+  GOVERNANCE_SETTING_UPDATED
+  CONTRACT_CREATED
+  CONTRACT_UPDATED
+  CONTRACT_DELETED
+  DELEGATION_CREATED
+  DELEGATION_UPDATED
+  DELEGATION_REVOKED
+  GM_REPORT_RUN
+}
+
+enum EscalationSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum EscalationType {
+  OVERDUE_APPROVAL
+  OVERDUE_TASK
+  SLA_VIOLATION
+  REPEATED_LEAVE_REJECT
+  FINANCE_EXCEPTION
+  COMPLIANCE_VIOLATION
+  DOCUMENT_MISSING
+  LICENSE_EXPIRY
+  RISK_WARNING
+  MANUAL
+}
+
+enum EscalationEntityType {
+  APPROVAL_REQUEST
+  TASK
+  LEAVE_REQUEST
+  FINANCE_REQUEST
+  COMPLIANCE_ITEM
+  CUSTOMER_ONBOARDING
+  DOCUMENT
+  ISSUE
+  OTHER
+}
+
+enum ContractType {
+  CUSTOMER
+  VENDOR
+  SUPPLIER
+  EMPLOYMENT
+  PROCUREMENT
+  SERVICE
+  SERVICE_AGREEMENT
+  LEASE
+  MOU
+  PARTNERSHIP
+  NDA
+  OTHER
+}
+
+enum ContractStatus {
+  DRAFT
+  UNDER_REVIEW
+  PENDING_APPROVAL
+  ACTIVE
+  EXPIRED
+  TERMINATED
+  RENEWED
+  RENEWAL_DUE
+}
+
+enum DelegationStatus {
+  DRAFT
+  PENDING_APPROVAL
+  SCHEDULED
+  ACTIVE
+  EXPIRED
+  REVOKED
 }
 
 enum SettingScopeType {
@@ -627,6 +815,7 @@ model Role {
   isSystem    Boolean          @default(false)
   permissions RolePermission[]
   users       User[]
+  requisitionApprovalSteps RequisitionApprovalStep[] @relation("RequisitionStepApproverRole")
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   deletedAt   DateTime?
@@ -744,11 +933,28 @@ model User {
   incidentReports        IncidentReport[]
   policyAcknowledgements PolicyAcknowledgement[]
   requisitions           Requisition[]
+  requisitionAttachmentsUploaded RequisitionAttachment[] @relation("RequisitionAttachmentUploader")
+  requisitionApprovalStepsAssigned RequisitionApprovalStep[] @relation("RequisitionStepApproverUser")
+  requisitionAuditLogs   RequisitionAuditLog[] @relation("RequisitionAuditActor")
+  logisticsTasksCreated  LogisticsTask[] @relation("LogisticsTaskCreator")
+  logisticsTasksPrimaryAssigned LogisticsTask[] @relation("LogisticsTaskPrimaryAssignee")
+  logisticsTasksSupervised LogisticsTask[] @relation("LogisticsTaskSupervisor")
+  logisticsTeamMemberships LogisticsTaskTeamMember[]
+  logisticsTaskDocumentsUploaded LogisticsTaskDocument[] @relation("LogisticsTaskDocumentUploader")
+  logisticsTaskAuditLogs LogisticsTaskAuditLog[] @relation("LogisticsTaskAuditActor")
   trainings              Training[]                 @relation("TrainingCreator")
   trainingParticipants   TrainingParticipant[]
   performanceReviews     PerformanceReview[]        @relation("EmployeeReviews")
   reviewsGiven           PerformanceReview[]        @relation("ReviewerReviews")
   auditLogs              AuditLog[]
+  escalationsCreated     EscalationLog[]            @relation("EscalationCreator")
+  escalationsResolved    EscalationLog[]            @relation("EscalationResolver")
+  ownedContracts         Contract[]                 @relation("ContractOwner")
+  createdDelegations     Delegation[]               @relation("DelegationCreator")
+  delegatedAssignments   Delegation[]               @relation("DelegationAssignee")
+  resolvedDelegations    Delegation[]               @relation("DelegationResolver")
+  approverDelegations    Delegation[]               @relation("DelegationApprover")
+  approvedDelegations    Delegation[]               @relation("DelegationApprovedBy")
   createdAt              DateTime                   @default(now())
   updatedAt              DateTime                   @updatedAt
   deletedAt              DateTime?
@@ -777,7 +983,10 @@ model Department {
   budgets        Budget[]
   allowances     Allowance[]
   deductions     Deduction[]
+  contracts      Contract[]
+  restrictedDelegations Delegation[] @relation("DelegationRestrictedDepartment")
   requisitions   Requisition[]
+  logisticsTasks LogisticsTask[]
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
   deletedAt      DateTime?
@@ -1917,17 +2126,275 @@ model Requisition {
   departmentId       String?
   title              String
   description        String?
+  requestCategory    RequisitionCategory      @default(GOODS)
+  requestType        RequisitionRequestType   @default(NEW_PURCHASE)
+  businessJustification String?
+  requiredByDate     DateTime?
+  urgencyReason      String?
+  emergencyJustification String?
   estimatedAmount    Decimal?
+  subtotal           Decimal                  @default(0)
+  taxApplicable      Boolean                  @default(false)
+  taxRate            Decimal?
+  taxAmount          Decimal                  @default(0)
+  grandTotal         Decimal                  @default(0)
+  currency           String                   @default("KES")
+  budgetLine         String?
+  costCenter         String?
+  fundingSource      RequisitionFundingSource @default(DEPARTMENT_BUDGET)
+  budgetAvailableAmount Decimal?
+  budgetExceeded     Boolean                  @default(false)
+  budgetOverrideUsed Boolean                  @default(false)
+  budgetOverrideReason String?
+  expenditureType    RequisitionExpenditureType @default(OPEX)
+  preferredSupplier  String?
+  supplierContact    String?
+  supplierQuoteReference String?
+  requireMultipleQuotes Boolean               @default(false)
+  quotesRequired     Int?
+  approvalRoute      RequisitionApprovalRoute @default(AUTO)
+  manualApproverIds  Json?
+  approvalRoutePreview Json?
+  requestedBySnapshot Json?
+  complianceChecks   Json?
   priority           Priority       @default(MEDIUM)
   status             RequisitionStatus @default(DRAFT)
   approvalRequestId  String?
   documents          Json?
   lockedAt           DateTime?
+  lineItems          RequisitionLineItem[]
+  attachments        RequisitionAttachment[]
+  approvalSteps      RequisitionApprovalStep[]
+  auditLogs          RequisitionAuditLog[]
   requestedBy        User           @relation(fields: [requestedById], references: [id])
   department         Department?    @relation(fields: [departmentId], references: [id])
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   deletedAt          DateTime?
+  @@index([departmentId, status])
+  @@index([requestedById, status])
+  @@index([requestCategory])
+  @@index([requiredByDate])
+  @@index([budgetExceeded])
+}
+
+model RequisitionLineItem {
+  id                String      @id @default(cuid())
+  requisitionId     String
+  itemName          String
+  specification     String?
+  quantity          Decimal
+  unitOfMeasure     String
+  estimatedUnitCost Decimal
+  estimatedTotalCost Decimal
+  preferredBrandModel String?
+  requiredByDate    DateTime
+  budgetCode        String?
+  costCenter        String?
+  requisition       Requisition @relation(fields: [requisitionId], references: [id])
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  @@index([requisitionId])
+}
+
+model RequisitionAttachment {
+  id             String                    @id @default(cuid())
+  requisitionId  String
+  attachmentType RequisitionAttachmentType
+  documentId     String?
+  fileName       String?
+  mimeType       String?
+  fileSize       Int?
+  uploadedById   String
+  metadata       Json?
+  uploadedAt     DateTime                  @default(now())
+  removedAt      DateTime?
+  requisition    Requisition               @relation(fields: [requisitionId], references: [id])
+  uploadedBy     User                      @relation("RequisitionAttachmentUploader", fields: [uploadedById], references: [id])
+  @@index([requisitionId, attachmentType])
+  @@index([uploadedById])
+}
+
+model RequisitionApprovalStep {
+  id             String         @id @default(cuid())
+  requisitionId  String
+  stepOrder      Int
+  stepType       String
+  label          String?
+  approverRoleId String?
+  approverUserId String?
+  status         ApprovalStatus @default(PENDING)
+  notes          String?
+  requisition    Requisition    @relation(fields: [requisitionId], references: [id])
+  approverRole   Role?          @relation("RequisitionStepApproverRole", fields: [approverRoleId], references: [id])
+  approverUser   User?          @relation("RequisitionStepApproverUser", fields: [approverUserId], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  @@index([requisitionId, stepOrder])
+  @@index([approverRoleId])
+  @@index([approverUserId])
+}
+
+model RequisitionAuditLog {
+  id            String      @id @default(cuid())
+  requisitionId String
+  actorId       String?
+  eventType     String
+  description   String?
+  oldValues     Json?
+  newValues     Json?
+  requisition   Requisition @relation(fields: [requisitionId], references: [id])
+  actor         User?       @relation("RequisitionAuditActor", fields: [actorId], references: [id])
+  createdAt     DateTime    @default(now())
+  @@index([requisitionId, createdAt])
+  @@index([actorId])
+}
+
+model LogisticsTask {
+  id                        String                @id @default(cuid())
+  title                     String
+  description               String?
+  taskType                  LogisticsTaskType
+  status                    LogisticsTaskStatus   @default(PENDING)
+  shipmentReferenceId       String?
+  trackingNumber            String?
+  originLocation            String?
+  destinationLocation       String?
+  transportMode             LogisticsTransportMode?
+  carrierProvider           String?
+  estimatedArrivalDate      DateTime?
+  actualArrivalDate         DateTime?
+  responsibleDepartmentId   String
+  primaryAssigneeId         String?
+  supervisorId              String?
+  externalPartner           String?
+  assignedTeamSnapshot      Json?
+  startDate                 DateTime?
+  expectedCompletionDate    DateTime?
+  actualCompletionDate      DateTime?
+  dependsOnTaskId           String?
+  blockedByType             LogisticsDependencyBlockerType?
+  blockedByNotes            String?
+  riskLevel                 LogisticsRiskLevel    @default(MEDIUM)
+  delayReason               String?
+  incidentReport            String?
+  alertDelayHours           Int?
+  alertTemperatureBreach    Boolean               @default(false)
+  alertMissedMilestone      Boolean               @default(false)
+  requiredTemperatureMin    Decimal?
+  requiredTemperatureMax    Decimal?
+  currentTemperature        Decimal?
+  monitoringDeviceId        String?
+  outOfRangeAlert           Boolean               @default(false)
+  createdById               String
+  department                Department            @relation(fields: [responsibleDepartmentId], references: [id])
+  createdBy                 User                  @relation("LogisticsTaskCreator", fields: [createdById], references: [id])
+  primaryAssignee           User?                 @relation("LogisticsTaskPrimaryAssignee", fields: [primaryAssigneeId], references: [id])
+  supervisor                User?                 @relation("LogisticsTaskSupervisor", fields: [supervisorId], references: [id])
+  dependsOnTask             LogisticsTask?        @relation("LogisticsTaskDependencyLink", fields: [dependsOnTaskId], references: [id])
+  dependentTasks            LogisticsTask[]       @relation("LogisticsTaskDependencyLink")
+  items                     LogisticsTaskItem[]
+  documents                 LogisticsTaskDocument[]
+  milestones                LogisticsTaskMilestone[]
+  dependencies              LogisticsTaskDependency[]
+  dependencyReferences      LogisticsTaskDependency[] @relation("LogisticsTaskDependencyTask")
+  teamMembers               LogisticsTaskTeamMember[]
+  auditLogs                 LogisticsTaskAuditLog[]
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
+  deletedAt                 DateTime?
+  @@index([responsibleDepartmentId, status])
+  @@index([primaryAssigneeId, status])
+  @@index([taskType, status])
+  @@index([shipmentReferenceId])
+  @@index([trackingNumber])
+}
+
+model LogisticsTaskItem {
+  id                 String        @id @default(cuid())
+  logisticsTaskId    String
+  itemName           String
+  quantity           Decimal
+  unit               String
+  weight             Decimal?
+  volume             Decimal?
+  temperatureRequirement String?
+  specialHandlingNotes String?
+  logisticsTask      LogisticsTask @relation(fields: [logisticsTaskId], references: [id])
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  @@index([logisticsTaskId])
+}
+
+model LogisticsTaskDocument {
+  id                 String                  @id @default(cuid())
+  logisticsTaskId    String
+  documentId         String
+  documentType       LogisticsTaskDocumentType
+  fileName           String?
+  mimeType           String?
+  fileSize           Int?
+  uploadedById       String
+  uploadedAt         DateTime                @default(now())
+  metadata           Json?
+  logisticsTask      LogisticsTask           @relation(fields: [logisticsTaskId], references: [id])
+  uploadedBy         User                    @relation("LogisticsTaskDocumentUploader", fields: [uploadedById], references: [id])
+  @@index([logisticsTaskId, documentType])
+  @@index([uploadedById])
+}
+
+model LogisticsTaskMilestone {
+  id                 String                  @id @default(cuid())
+  logisticsTaskId    String
+  name               String
+  expectedDate       DateTime
+  actualDate         DateTime?
+  status             LogisticsMilestoneStatus @default(PENDING)
+  logisticsTask      LogisticsTask           @relation(fields: [logisticsTaskId], references: [id])
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  @@index([logisticsTaskId, expectedDate])
+}
+
+model LogisticsTaskDependency {
+  id                 String                        @id @default(cuid())
+  logisticsTaskId    String
+  dependsOnTaskId    String?
+  blockerType        LogisticsDependencyBlockerType?
+  blockerNotes       String?
+  logisticsTask      LogisticsTask                 @relation(fields: [logisticsTaskId], references: [id])
+  dependsOnTask      LogisticsTask?                @relation("LogisticsTaskDependencyTask", fields: [dependsOnTaskId], references: [id])
+  createdAt          DateTime                      @default(now())
+  updatedAt          DateTime                      @updatedAt
+  @@index([logisticsTaskId])
+}
+
+model LogisticsTaskAuditLog {
+  id                 String          @id @default(cuid())
+  logisticsTaskId    String
+  actorId            String?
+  eventType          String
+  description        String?
+  oldValues          Json?
+  newValues          Json?
+  logisticsTask      LogisticsTask   @relation(fields: [logisticsTaskId], references: [id])
+  actor              User?           @relation("LogisticsTaskAuditActor", fields: [actorId], references: [id])
+  createdAt          DateTime        @default(now())
+  @@index([logisticsTaskId, createdAt])
+  @@index([actorId])
+}
+
+model LogisticsTaskTeamMember {
+  id                 String        @id @default(cuid())
+  logisticsTaskId    String
+  userId             String
+  roleLabel          String?
+  logisticsTask      LogisticsTask @relation(fields: [logisticsTaskId], references: [id])
+  user               User          @relation(fields: [userId], references: [id])
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  @@unique([logisticsTaskId, userId])
+  @@index([userId])
 }
 
 model VendorDocument {
@@ -2018,6 +2485,104 @@ model AuditLog {
   @@index([action])
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+model CompanySetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EscalationLog {
+  id                String               @id @default(cuid())
+  type              EscalationType
+  relatedEntityId   String
+  relatedEntityType EscalationEntityType
+  departmentId      String?
+  reason            String
+  severity          EscalationSeverity
+  createdById       String
+  createdAt         DateTime             @default(now())
+  resolvedAt        DateTime?
+  resolvedById      String?
+  resolutionNotes   String?
+  createdBy         User                 @relation("EscalationCreator", fields: [createdById], references: [id])
+  resolvedBy        User?                @relation("EscalationResolver", fields: [resolvedById], references: [id])
+  @@index([severity, relatedEntityType])
+  @@index([relatedEntityType, relatedEntityId])
+  @@index([departmentId, severity])
+  @@index([createdById])
+  @@index([resolvedById])
+}
+
+model Contract {
+  id                  String         @id @default(cuid())
+  name                String
+  type                ContractType
+  status              ContractStatus @default(DRAFT)
+  category            String?
+  counterpartyName    String
+  amount              Decimal?
+  currency            String         @default("KES")
+  startDate           DateTime?
+  endDate             DateTime?
+  renewalReminderDays Int            @default(30)
+  ownerId             String?
+  departmentId        String?
+  documentId          String?
+  metadata            Json?
+  notes               String?
+  owner               User?          @relation("ContractOwner", fields: [ownerId], references: [id])
+  department          Department?    @relation(fields: [departmentId], references: [id])
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  deletedAt           DateTime?
+  @@index([type, status])
+  @@index([endDate, status])
+  @@index([departmentId, status])
+}
+
+model Delegation {
+  id               String           @id @default(cuid())
+  delegatorId      String
+  delegateUserId   String
+  modules          String[]
+  restrictedModules String[]        @default([])
+  restrictedDepartmentId String?
+  maxApprovalAmount Decimal?
+  allowFinancialApprovals Boolean   @default(false)
+  allowContractApprovals Boolean    @default(false)
+  immediateActivation Boolean       @default(false)
+  autoExpire       Boolean          @default(true)
+  reason           String?
+  justification    String?
+  approvalRequired Boolean          @default(false)
+  approverId       String?
+  approvedById     String?
+  approvedAt       DateTime?
+  metadata         Json?
+  startAt          DateTime
+  endAt            DateTime
+  status           DelegationStatus @default(DRAFT)
+  notes            String?
+  revokedReason    String?
+  resolvedAt       DateTime?
+  resolvedById     String?
+  delegator        User             @relation("DelegationCreator", fields: [delegatorId], references: [id])
+  delegateUser     User             @relation("DelegationAssignee", fields: [delegateUserId], references: [id])
+  restrictedDepartment Department?  @relation("DelegationRestrictedDepartment", fields: [restrictedDepartmentId], references: [id])
+  approver         User?            @relation("DelegationApprover", fields: [approverId], references: [id])
+  approvedBy       User?            @relation("DelegationApprovedBy", fields: [approvedById], references: [id])
+  resolvedBy       User?            @relation("DelegationResolver", fields: [resolvedById], references: [id])
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  @@index([delegateUserId, status, startAt, endAt])
+  @@index([delegatorId, status])
+  @@index([approverId, status])
+  @@index([restrictedDepartmentId, status])
 }
 
 model Setting {

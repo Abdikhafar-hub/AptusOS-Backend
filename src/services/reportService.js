@@ -919,6 +919,16 @@ const reportService = {
 
   async runQuery(type, query = {}, auth) {
     return runNewReportType(type, query, auth);
+  },
+
+  async runEnterprise(type, query = {}, auth) {
+    if (type === 'financeReport') return runLegacyReport('finance', query);
+    if (type === 'complianceReport') return runLegacyReport('compliance', query);
+    if (type === 'procurementReport') return runLegacyReport('requisitions', query);
+    if (type === 'HRreport') return runLegacyReport('staff', query);
+    if (type === 'performanceReport') return runNewReportType('performance', query, auth);
+    if (type === 'approvalPressureReport') return runNewReportType('approvals', query, auth);
+    return null;
   }
 };
 

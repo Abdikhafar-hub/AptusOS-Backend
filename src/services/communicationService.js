@@ -1029,6 +1029,34 @@ const communicationService = {
     }, 0);
   },
 
+  async mailCounts(userId) {
+    const [inbox, sent, unread] = await Promise.all([
+      prisma.message.count({
+        where: {
+          deletedAt: null,
+          senderId: { not: userId },
+          conversation: {
+            deletedAt: null,
+            participants: { some: { userId } }
+          }
+        }
+      }),
+      prisma.message.count({
+        where: {
+          deletedAt: null,
+          senderId: userId,
+          conversation: {
+            deletedAt: null,
+            participants: { some: { userId } }
+          }
+        }
+      }),
+      this.unreadCount(userId)
+    ]);
+
+    return { inbox, sent, unread };
+  },
+
   async listChannels(auth, query = {}) {
     const { page, limit, skip } = parsePagination(query);
     const where = accessControlService.isGeneralManager(auth)

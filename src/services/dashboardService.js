@@ -38,6 +38,11 @@ const safeDepartmentSelect = {
   headId: true
 };
 
+const uniqueValues = (values = []) => [...new Set((values || []).filter(Boolean))];
+const openTaskStatuses = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'IN_REVIEW'];
+const openComplianceStatuses = ['OPEN', 'IN_PROGRESS', 'UNDER_REVIEW', 'PENDING', 'SUBMITTED'];
+const openIncidentStatuses = ['OPEN', 'INVESTIGATING', 'IN_PROGRESS', 'UNDER_REVIEW', 'PENDING', 'SUBMITTED'];
+
 const dashboardService = {
   async generalManager(userId) {
     const now = new Date();
@@ -527,18 +532,512 @@ const dashboardService = {
   },
 
   async departmentHead(auth) {
-    const today = new Date();
-    const [staff, activeTasks, overdueTasks, pendingApprovals, documents, announcements, unreadMessages, leaveCalendar] = await prisma.$transaction([
-      prisma.user.count({ where: { departmentId: { in: auth.departmentIds }, deletedAt: null } }),
-      prisma.task.count({ where: { departmentId: { in: auth.departmentIds }, deletedAt: null, status: { in: ['TODO', 'IN_PROGRESS', 'BLOCKED', 'IN_REVIEW'] } } }),
-      prisma.task.count({ where: { departmentId: { in: auth.departmentIds }, deletedAt: null, dueDate: { lt: today }, status: { in: ['TODO', 'IN_PROGRESS', 'BLOCKED', 'IN_REVIEW'] } } }),
-      prisma.approvalRequest.count({ where: { currentApproverId: auth.userId, status: 'PENDING' } }),
-      prisma.document.count({ where: { departmentId: { in: auth.departmentIds }, deletedAt: null } }),
-      prisma.announcement.findMany({ where: { departmentId: { in: auth.departmentIds }, deletedAt: null }, orderBy: { createdAt: 'desc' }, take: 5 }),
-      prisma.notification.count({ where: { userId: auth.userId, readAt: null } }),
-      prisma.leaveRequest.findMany({ where: { employee: { departmentId: { in: auth.departmentIds } }, deletedAt: null, status: 'APPROVED', endDate: { gte: today } }, include: { employee: { select: { id: true, fullName: true } } }, take: 10 })
+    const departmentIds = uniqueValues(auth?.departmentIds || []);
+    if (!departmentIds.length) {
+      return {
+        department: null,
+        summary: {
+          totalStaff: 0,
+          staffOnLeaveToday: 0,
+          pendingLeaveApprovals: 0,
+          activeTasks: 0,
+          overdueTasks: 0,
+          pendingApprovals: 0,
+          openIncidents: 0,
+          openComplianceItems: 0,
+          unreadMessages: 0,
+          documentsPendingAcknowledgement: 0
+        },
+        staffPreview: [],
+        approvalsPreview: [],
+        leavePreview: {
+          approvedToday: [],
+          upcoming: [],
+          pending: []
+        },
+        tasksPreview: {
+          dueToday: [],
+          overdue: [],
+          waitingReview: []
+        },
+        incidentsPreview: [],
+        documentsPreview: {
+          compliancePercentage: 0,
+          items: []
+        },
+        announcementsPreview: []
+      };
+    }
+
+    const today = startOfToday();
+    const tomorrow = endOfToday();
+    const now = new Date();
+    const next30Days = new Date(now);
+    next30Days.setDate(next30Days.getDate() + 30);
+
+    const taskScope = {
+      OR: [
+        { departmentId: { in: departmentIds } },
+        { assignedTo: { departmentId: { in: departmentIds } } }
+      ]
+    };
+
+    const [
+      departments,
+      totalStaff,
+      staffOnLeaveToday,
+      pendingLeaveApprovals,
+      activeTasks,
+      overdueTasks,
+      pendingApprovals,
+      openIncidents,
+      openComplianceItems,
+      unreadMessages,
+      staffPreviewRaw,
+      staffTaskCountsRaw,
+      attendanceTodayRaw,
+      actionableApprovalsRaw,
+      approvedLeavesTodayRaw,
+      approvedLeavesUpcomingRaw,
+      pendingLeavesRaw,
+      dueTodayTasksRaw,
+      overdueTasksRaw,
+      waitingReviewTasksRaw,
+      openIncidentsRaw,
+      openRisksRaw,
+      openComplianceRaw,
+      policyDocumentsRaw,
+      activeStaffRaw,
+      announcementsRaw
+    ] = await prisma.$transaction([
+      prisma.department.findMany({
+        where: { id: { in: departmentIds }, deletedAt: null },
+        select: safeDepartmentSelect,
+        orderBy: { name: 'asc' }
+      }),
+      prisma.user.count({
+        where: { departmentId: { in: departmentIds }, deletedAt: null }
+      }),
+      prisma.leaveRequest.count({
+        where: {
+          deletedAt: null,
+          status: 'APPROVED',
+          startDate: { lte: now },
+          endDate: { gte: today },
+          employee: { departmentId: { in: departmentIds } }
+        }
+      }),
+      prisma.leaveRequest.count({
+        where: {
+          deletedAt: null,
+          status: 'PENDING',
+          employee: { departmentId: { in: departmentIds } }
+        }
+      }),
+      prisma.task.count({
+        where: {
+          deletedAt: null,
+          status: { in: openTaskStatuses },
+          AND: [taskScope]
+        }
+      }),
+      prisma.task.count({
+        where: {
+          deletedAt: null,
+          status: { in: openTaskStatuses },
+          dueDate: { lt: now },
+          AND: [taskScope]
+        }
+      }),
+      prisma.approvalRequest.count({
+        where: {
+          deletedAt: null,
+          status: 'PENDING',
+          OR: [
+            { currentApproverId: auth.userId },
+            { requestedBy: { departmentId: { in: departmentIds } } }
+          ]
+        }
+      }),
+      prisma.incidentReport.count({
+        where: {
+          deletedAt: null,
+          status: { in: openIncidentStatuses },
+          reportedBy: { departmentId: { in: departmentIds } }
+        }
+      }),
+      prisma.complianceItem.count({
+        where: {
+          deletedAt: null,
+          status: { in: openComplianceStatuses },
+          OR: [
+            { departmentId: { in: departmentIds } },
+            { owner: { departmentId: { in: departmentIds } } }
+          ]
+        }
+      }),
+      prisma.notification.count({
+        where: {
+          userId: auth.userId,
+          readAt: null,
+          type: { in: ['DIRECT_MESSAGE', 'DEPARTMENT_MESSAGE', 'MENTION'] }
+        }
+      }),
+      prisma.user.findMany({
+        where: { departmentId: { in: departmentIds }, deletedAt: null },
+        select: {
+          id: true,
+          fullName: true,
+          isActive: true,
+          employmentStatus: true,
+          role: { select: { id: true, name: true, displayName: true } }
+        },
+        orderBy: [{ isActive: 'desc' }, { fullName: 'asc' }],
+        take: 10
+      }),
+      prisma.task.groupBy({
+        by: ['assignedToId'],
+        where: {
+          deletedAt: null,
+          status: { in: openTaskStatuses },
+          assignedToId: { not: null },
+          assignedTo: { departmentId: { in: departmentIds } }
+        },
+        _count: true
+      }),
+      prisma.attendanceRecord.findMany({
+        where: {
+          deletedAt: null,
+          date: { gte: today, lt: tomorrow },
+          employee: { departmentId: { in: departmentIds } }
+        },
+        select: {
+          employeeId: true,
+          status: true,
+          checkInAt: true,
+          checkOutAt: true
+        }
+      }),
+      prisma.approvalRequest.findMany({
+        where: {
+          deletedAt: null,
+          status: 'PENDING',
+          OR: [
+            { currentApproverId: auth.userId },
+            { requestedBy: { departmentId: { in: departmentIds } } }
+          ]
+        },
+        include: {
+          requestedBy: { select: { id: true, fullName: true, email: true } },
+          currentApprover: { select: { id: true, fullName: true, email: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 8
+      }),
+      prisma.leaveRequest.findMany({
+        where: {
+          deletedAt: null,
+          status: 'APPROVED',
+          startDate: { lte: now },
+          endDate: { gte: today },
+          employee: { departmentId: { in: departmentIds } }
+        },
+        include: {
+          employee: { select: { id: true, fullName: true, departmentId: true, department: { select: safeDepartmentSelect } } }
+        },
+        orderBy: { startDate: 'asc' },
+        take: 8
+      }),
+      prisma.leaveRequest.findMany({
+        where: {
+          deletedAt: null,
+          status: 'APPROVED',
+          startDate: { gte: today, lte: next30Days },
+          employee: { departmentId: { in: departmentIds } }
+        },
+        include: {
+          employee: { select: { id: true, fullName: true, departmentId: true, department: { select: safeDepartmentSelect } } }
+        },
+        orderBy: { startDate: 'asc' },
+        take: 10
+      }),
+      prisma.leaveRequest.findMany({
+        where: {
+          deletedAt: null,
+          status: 'PENDING',
+          employee: { departmentId: { in: departmentIds } }
+        },
+        include: {
+          employee: { select: { id: true, fullName: true, departmentId: true, department: { select: safeDepartmentSelect } } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10
+      }),
+      prisma.task.findMany({
+        where: {
+          deletedAt: null,
+          status: { in: openTaskStatuses },
+          dueDate: { gte: today, lt: tomorrow },
+          AND: [taskScope]
+        },
+        include: {
+          assignedTo: { select: { id: true, fullName: true } },
+          department: { select: safeDepartmentSelect }
+        },
+        orderBy: [{ priority: 'desc' }, { dueDate: 'asc' }],
+        take: 10
+      }),
+      prisma.task.findMany({
+        where: {
+          deletedAt: null,
+          status: { in: openTaskStatuses },
+          dueDate: { lt: now },
+          AND: [taskScope]
+        },
+        include: {
+          assignedTo: { select: { id: true, fullName: true } },
+          department: { select: safeDepartmentSelect }
+        },
+        orderBy: [{ dueDate: 'asc' }, { priority: 'desc' }],
+        take: 10
+      }),
+      prisma.task.findMany({
+        where: {
+          deletedAt: null,
+          status: 'IN_REVIEW',
+          AND: [taskScope]
+        },
+        include: {
+          assignedTo: { select: { id: true, fullName: true } },
+          department: { select: safeDepartmentSelect }
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: 10
+      }),
+      prisma.incidentReport.findMany({
+        where: {
+          deletedAt: null,
+          status: { in: openIncidentStatuses },
+          reportedBy: { departmentId: { in: departmentIds } }
+        },
+        include: { reportedBy: { select: { id: true, fullName: true, departmentId: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 6
+      }),
+      prisma.riskRegister.findMany({
+        where: {
+          deletedAt: null,
+          status: { in: openComplianceStatuses },
+          owner: { departmentId: { in: departmentIds } }
+        },
+        include: { owner: { select: { id: true, fullName: true, departmentId: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 6
+      }),
+      prisma.complianceItem.findMany({
+        where: {
+          deletedAt: null,
+          status: { in: openComplianceStatuses },
+          OR: [
+            { departmentId: { in: departmentIds } },
+            { owner: { departmentId: { in: departmentIds } } }
+          ]
+        },
+        include: {
+          owner: { select: { id: true, fullName: true, departmentId: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 6
+      }),
+      prisma.document.findMany({
+        where: {
+          deletedAt: null,
+          category: { in: ['POLICY', 'SOP'] },
+          OR: [
+            { departmentId: null },
+            { departmentId: { in: departmentIds } }
+          ]
+        },
+        include: {
+          department: { select: safeDepartmentSelect },
+          uploadedBy: { select: { id: true, fullName: true } }
+        },
+        orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+        take: 10
+      }),
+      prisma.user.findMany({
+        where: {
+          departmentId: { in: departmentIds },
+          deletedAt: null,
+          isActive: true
+        },
+        select: {
+          id: true,
+          fullName: true,
+          role: { select: { id: true, name: true, displayName: true } }
+        },
+        orderBy: { fullName: 'asc' }
+      }),
+      prisma.announcement.findMany({
+        where: {
+          deletedAt: null,
+          OR: [
+            { departmentId: null },
+            { departmentId: { in: departmentIds } }
+          ]
+        },
+        include: {
+          department: { select: safeDepartmentSelect },
+          publishedBy: { select: { id: true, fullName: true } },
+          reads: { where: { userId: auth.userId } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10
+      })
     ]);
-    return { staff, activeTasks, overdueTasks, pendingApprovals, documents, announcements, unreadMessages, leaveCalendar };
+
+    const staffTaskCountMap = new Map(
+      staffTaskCountsRaw.map((entry) => [entry.assignedToId, normalizeGroupedCount(entry._count)])
+    );
+    const attendanceTodayMap = new Map(attendanceTodayRaw.map((entry) => [entry.employeeId, entry]));
+    const staffPreview = staffPreviewRaw.map((staff) => ({
+      id: staff.id,
+      fullName: staff.fullName,
+      isActive: staff.isActive,
+      employmentStatus: staff.employmentStatus,
+      role: staff.role,
+      assignedTasksCount: staffTaskCountMap.get(staff.id) || 0,
+      attendance: attendanceTodayMap.get(staff.id) || null
+    }));
+
+    const activeStaffIds = activeStaffRaw.map((staff) => staff.id);
+    const policyDocumentIds = policyDocumentsRaw.map((document) => document.id);
+    const acknowledgementRows = activeStaffIds.length && policyDocumentIds.length
+      ? await prisma.policyAcknowledgement.findMany({
+        where: {
+          policyDocumentId: { in: policyDocumentIds },
+          userId: { in: activeStaffIds }
+        },
+        select: {
+          policyDocumentId: true,
+          userId: true,
+          acknowledgedAt: true
+        }
+      })
+      : [];
+
+    const acknowledgementsByDocument = acknowledgementRows.reduce((acc, item) => {
+      if (!acc.has(item.policyDocumentId)) acc.set(item.policyDocumentId, new Set());
+      acc.get(item.policyDocumentId).add(item.userId);
+      return acc;
+    }, new Map());
+
+    const documentsPreview = policyDocumentsRaw.map((document) => {
+      const acknowledgedUsers = acknowledgementsByDocument.get(document.id) || new Set();
+      const pendingStaff = activeStaffRaw.filter((staff) => !acknowledgedUsers.has(staff.id));
+      const acknowledgedCount = acknowledgedUsers.size;
+      const pendingCount = pendingStaff.length;
+      const totalTargets = activeStaffRaw.length;
+      const compliancePercentage = totalTargets ? Math.round((acknowledgedCount / totalTargets) * 100) : 0;
+      return {
+        id: document.id,
+        title: document.title,
+        category: document.category,
+        status: document.status,
+        department: document.department,
+        updatedAt: document.updatedAt,
+        uploadedBy: document.uploadedBy,
+        pendingCount,
+        acknowledgedCount,
+        totalTargets,
+        compliancePercentage,
+        pendingStaff: pendingStaff.slice(0, 6).map((staff) => ({
+          id: staff.id,
+          fullName: staff.fullName,
+          role: staff.role
+        }))
+      };
+    });
+
+    const totalAcknowledgementTargets = documentsPreview.reduce((sum, entry) => sum + entry.totalTargets, 0);
+    const totalPendingAcknowledgements = documentsPreview.reduce((sum, entry) => sum + entry.pendingCount, 0);
+    const acknowledgementCompliancePercentage = totalAcknowledgementTargets
+      ? Math.max(0, Math.round(((totalAcknowledgementTargets - totalPendingAcknowledgements) / totalAcknowledgementTargets) * 100))
+      : 0;
+
+    const incidentsPreview = [
+      ...openIncidentsRaw.map((item) => ({
+        id: item.id,
+        source: 'INCIDENT',
+        title: item.title,
+        severity: item.severity,
+        status: item.status,
+        assignedTo: item.reportedBy ? { id: item.reportedBy.id, fullName: item.reportedBy.fullName } : null,
+        createdAt: item.createdAt
+      })),
+      ...openRisksRaw.map((item) => ({
+        id: item.id,
+        source: 'RISK',
+        title: item.title,
+        severity: item.severity,
+        status: item.status,
+        assignedTo: item.owner ? { id: item.owner.id, fullName: item.owner.fullName } : null,
+        createdAt: item.createdAt
+      })),
+      ...openComplianceRaw.map((item) => ({
+        id: item.id,
+        source: 'COMPLIANCE_ITEM',
+        title: item.title,
+        severity: item.priority,
+        status: item.status,
+        assignedTo: item.owner ? { id: item.owner.id, fullName: item.owner.fullName } : null,
+        createdAt: item.createdAt
+      }))
+    ]
+      .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+      .slice(0, 12);
+
+    return {
+      department: departments[0] || null,
+      departments,
+      summary: {
+        totalStaff,
+        staffOnLeaveToday,
+        pendingLeaveApprovals,
+        activeTasks,
+        overdueTasks,
+        pendingApprovals,
+        openIncidents,
+        openComplianceItems,
+        unreadMessages,
+        documentsPendingAcknowledgement: totalPendingAcknowledgements
+      },
+      staffPreview,
+      approvalsPreview: actionableApprovalsRaw.map((item) => ({
+        ...item,
+        isActionable: item.currentApproverId === auth.userId
+      })),
+      leavePreview: {
+        approvedToday: approvedLeavesTodayRaw,
+        upcoming: approvedLeavesUpcomingRaw,
+        pending: pendingLeavesRaw
+      },
+      tasksPreview: {
+        dueToday: dueTodayTasksRaw,
+        overdue: overdueTasksRaw,
+        waitingReview: waitingReviewTasksRaw
+      },
+      incidentsPreview,
+      documentsPreview: {
+        compliancePercentage: acknowledgementCompliancePercentage,
+        items: documentsPreview
+      },
+      announcementsPreview: announcementsRaw.map((item) => ({
+        ...item,
+        isRead: Boolean(item.reads?.length),
+        attachments: []
+      }))
+    };
   },
 
   async accounts(auth) {

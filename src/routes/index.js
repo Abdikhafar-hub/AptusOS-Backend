@@ -39,11 +39,14 @@ router.use('/compliance/incidents', authenticate, require('./incidentRoutes'));
 router.use('/compliance/policies', authenticate, require('./policyRoutes'));
 router.use('/operations/requisitions', authenticate, require('./requisitionRoutes'));
 router.use('/operations/vendors', authenticate, require('./vendorRoutes'));
+router.use('/operations/logistics-tasks', authenticate, require('./logisticsTaskRoutes'));
 router.use('/trainings', authenticate, require('./trainingRoutes'));
 router.use('/performance', authenticate, require('./performanceRoutes'));
 router.use('/reports', require('./reportRoutes'));
 router.use('/audit-logs', authenticate, require('./auditLogRoutes'));
 router.use('/settings', authenticate, require('./settingRoutes'));
 router.use('/dashboard', require('./dashboardRoutes'));
+router.use('/department-head', require('./departmentHeadRoutes'));
+router.use('/general-manager', require('./generalManagerRoutes'));
 
 module.exports = router;

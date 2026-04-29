@@ -11,7 +11,9 @@ const PERMISSIONS = [
   'finance:manage', 'finance:read', 'accounts:manage',
   'customers:manage', 'sales_compliance:manage', 'compliance:manage',
   'operations:manage', 'trainings:manage', 'performance:manage',
-  'reports:read', 'audit_logs:read', 'settings:manage'
+  'reports:read', 'audit_logs:read', 'settings:manage',
+  'general_manager:access', 'governance:manage', 'escalations:resolve',
+  'contracts:manage', 'delegations:manage'
 ];
 
 module.exports = { PERMISSIONS };

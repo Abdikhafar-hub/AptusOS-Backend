@@ -19,6 +19,7 @@ messageRouter.post('/:messageId/read', validate(v.mailMessageParam), controller.
 messageRouter.post('/threads/:threadId/read', validate(v.mailThreadParam), controller.markThreadRead);
 messageRouter.get('/', validate(listQuery), controller.listConversations);
 messageRouter.get('/unread-count', controller.unreadCount);
+messageRouter.get('/mail-counts', controller.mailCounts);
 messageRouter.post('/', validate(v.message), controller.sendMessage);
 messageRouter.get('/:id', validate(idParam), controller.getConversationMessages);
 

@@ -41,23 +41,40 @@ const approvalPolicyService = {
     return steps;
   },
 
-  async buildRequisitionSteps({ requesterRoleName, estimatedAmount }) {
+  async buildRequisitionSteps({
+    requesterRoleName,
+    estimatedAmount,
+    departmentHeadId,
+    requesterId,
+    requiresProcurementReview = false,
+    requestCategory
+  }) {
     const requesterRole = normalizeRoleName(requesterRoleName);
     const amount = Number(estimatedAmount || 0);
     const roleMap = await getRoleMap([
+      ROLES.DEPARTMENT_HEAD,
       ROLES.OPERATIONS_PROCUREMENT_OFFICER,
       ROLES.FINANCE_ACCOUNTS_MANAGER,
       ROLES.GENERAL_MANAGER
     ]);
     const steps = [];
 
+    if (departmentHeadId && departmentHeadId !== requesterId) {
+      appendUserStep(steps, departmentHeadId);
+    } else if (requesterRole !== ROLES.DEPARTMENT_HEAD) {
+      appendRoleStep(steps, roleMap, ROLES.DEPARTMENT_HEAD);
+    }
+
     if (requesterRole !== ROLES.OPERATIONS_PROCUREMENT_OFFICER) {
       appendRoleStep(steps, roleMap, ROLES.OPERATIONS_PROCUREMENT_OFFICER);
     }
-    if (amount >= 50000) {
+    if (requiresProcurementReview) {
+      appendRoleStep(steps, roleMap, ROLES.OPERATIONS_PROCUREMENT_OFFICER);
+    }
+    if (amount >= 50000 || requestCategory === 'EMERGENCY_PROCUREMENT') {
       appendRoleStep(steps, roleMap, ROLES.FINANCE_ACCOUNTS_MANAGER);
     }
-    if (amount >= 150000 || !steps.length) {
+    if (amount >= 250000 || requestCategory === 'EMERGENCY_PROCUREMENT' || !steps.length) {
       appendRoleStep(steps, roleMap, ROLES.GENERAL_MANAGER);
     }
 

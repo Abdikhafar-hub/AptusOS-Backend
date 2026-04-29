@@ -13,6 +13,7 @@ module.exports = {
   recipientDepartments: asyncHandler(async (req, res) => success(res, 'Recipient departments', await communicationService.getRecipientDepartments(req.auth, req.query))),
   listConversations: asyncHandler(async (req, res) => success(res, 'Conversation list', await communicationService.listConversations(req.auth.userId, req.query))),
   unreadCount: asyncHandler(async (req, res) => success(res, 'Unread message count', { count: await communicationService.unreadCount(req.auth.userId) })),
+  mailCounts: asyncHandler(async (req, res) => success(res, 'Mail counts', await communicationService.mailCounts(req.auth.userId))),
   getConversationMessages: asyncHandler(async (req, res) => success(res, 'Conversation messages', await communicationService.getConversationMessages(req.auth.userId, req.params.id, req.query))),
   sendMessage: asyncHandler(async (req, res) => success(res, 'Message sent', await communicationService.sendDirectMessage(req.auth.userId, req.body, req), 201)),
   markConversationRead: asyncHandler(async (req, res) => success(res, 'Conversation marked read', await communicationService.markConversationRead(req.auth.userId, req.params.id))),
