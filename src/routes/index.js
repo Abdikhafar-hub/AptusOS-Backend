@@ -11,6 +11,7 @@ router.use('/roles', authenticate, require('./roleRoutes'));
 router.use('/permissions', authenticate, require('./permissionRoutes'));
 router.use('/departments', require('./departmentRoutes'));
 router.use('/documents', require('./documentRoutes'));
+router.use('/files', require('./fileRoutes'));
 router.use('/tasks', authenticate, require('./taskRoutes'));
 router.use('/approvals', require('./approvalRoutes'));
 router.use('/comments', commentRouter);

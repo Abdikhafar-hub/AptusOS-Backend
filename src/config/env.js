@@ -15,7 +15,8 @@ const env = {
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,
-    apiSecret: process.env.CLOUDINARY_API_SECRET
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
+    signedUrlTtlSeconds: Number(process.env.CLOUDINARY_SIGNED_URL_TTL_SECONDS || 90)
   },
   email: {
     defaultProvider: process.env.EMAIL_DEFAULT_PROVIDER || 'resend',

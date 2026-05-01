@@ -65,6 +65,12 @@ const normalizeOptionalString = (value) => {
   return normalized || undefined;
 };
 
+const normalizeDepartmentCode = (value) => {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) return undefined;
+  return normalized.toUpperCase();
+};
+
 async function resolveHeadId(tx, headId) {
   const normalizedHeadId = normalizeOptionalString(headId);
   if (!normalizedHeadId) return null;
@@ -87,7 +93,15 @@ async function resolveHeadId(tx, headId) {
 async function buildCreateDepartmentData(tx, data) {
   return {
     name: String(data.name).trim(),
+    code: normalizeDepartmentCode(data.code),
     description: normalizeOptionalString(data.description),
+    businessUnit: normalizeOptionalString(data.businessUnit),
+    costCenter: normalizeOptionalString(data.costCenter),
+    location: normalizeOptionalString(data.location),
+    contactEmail: normalizeOptionalString(data.contactEmail),
+    contactPhone: normalizeOptionalString(data.contactPhone),
+    mission: normalizeOptionalString(data.mission),
+    operatingNotes: normalizeOptionalString(data.operatingNotes),
     status: normalizeOptionalString(data.status),
     headId: await resolveHeadId(tx, data.headId),
     slug: data.slug || slugify(data.name, { lower: true, strict: true })
@@ -104,6 +118,38 @@ async function buildUpdateDepartmentData(tx, data) {
 
   if (data.description !== undefined) {
     updateData.description = normalizeOptionalString(data.description) || null;
+  }
+
+  if (data.code !== undefined) {
+    updateData.code = normalizeDepartmentCode(data.code) || null;
+  }
+
+  if (data.businessUnit !== undefined) {
+    updateData.businessUnit = normalizeOptionalString(data.businessUnit) || null;
+  }
+
+  if (data.costCenter !== undefined) {
+    updateData.costCenter = normalizeOptionalString(data.costCenter) || null;
+  }
+
+  if (data.location !== undefined) {
+    updateData.location = normalizeOptionalString(data.location) || null;
+  }
+
+  if (data.contactEmail !== undefined) {
+    updateData.contactEmail = normalizeOptionalString(data.contactEmail) || null;
+  }
+
+  if (data.contactPhone !== undefined) {
+    updateData.contactPhone = normalizeOptionalString(data.contactPhone) || null;
+  }
+
+  if (data.mission !== undefined) {
+    updateData.mission = normalizeOptionalString(data.mission) || null;
+  }
+
+  if (data.operatingNotes !== undefined) {
+    updateData.operatingNotes = normalizeOptionalString(data.operatingNotes) || null;
   }
 
   if (data.status !== undefined) {
@@ -431,7 +477,15 @@ const departmentService = {
         id: department.id,
         name: department.name,
         slug: department.slug,
+        code: department.code,
         description: department.description,
+        businessUnit: department.businessUnit,
+        costCenter: department.costCenter,
+        location: department.location,
+        contactEmail: department.contactEmail,
+        contactPhone: department.contactPhone,
+        mission: department.mission,
+        operatingNotes: department.operatingNotes,
         status: department.status,
         createdAt: department.createdAt,
         updatedAt: department.updatedAt

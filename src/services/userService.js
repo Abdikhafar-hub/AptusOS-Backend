@@ -380,7 +380,11 @@ const userService = {
     const existing = await prisma.user.findUnique({ where: { id }, include });
     if (!existing) throw new AppError('User not found', 404);
     if (actorId !== id) accessControlService.assertUserManageAccess(req.auth, existing);
-    const uploaded = await uploadService.uploadSingleFile(file, 'users');
+    const uploaded = await uploadService.uploadSingleFile(file, 'users', {
+      resourceType: 'image',
+      deliveryType: 'upload',
+      exposePublicUrl: true
+    });
     const user = await prisma.user.update({ where: { id }, data: { profilePhotoUrl: uploaded.fileUrl }, include });
     await auditService.log({ actorId, action: AUDIT_ACTIONS.USER_UPDATED, entityType: 'User', entityId: id, oldValues: { profilePhotoUrl: existing.profilePhotoUrl }, newValues: { profilePhotoUrl: uploaded.fileUrl }, req });
     return safe(user);

@@ -4,12 +4,25 @@ const AppError = require('../utils/AppError');
 const env = require('../config/env');
 
 const folderFor = (folder = 'documents') => `aptus-os/${folder}`;
+const DEFAULT_RESOURCE_TYPE = 'raw';
+const DEFAULT_DELIVERY_TYPE = 'authenticated';
 
-const uploadBuffer = (file, folder) => new Promise((resolve, reject) => {
+const toStorageUri = (publicId, resourceType, deliveryType) => (
+  `cloudinary://${resourceType}/${deliveryType}/${publicId}`
+);
+
+const uploadBuffer = (file, folder, options = {}) => new Promise((resolve, reject) => {
   if (!file?.buffer) return reject(new AppError('No file buffer provided', 400));
+  const resourceType = options.resourceType || DEFAULT_RESOURCE_TYPE;
+  const deliveryType = options.deliveryType || DEFAULT_DELIVERY_TYPE;
 
   const stream = cloudinary.uploader.upload_stream(
-    { folder: folderFor(folder), resource_type: 'auto', use_filename: true },
+    {
+      folder: folderFor(folder),
+      resource_type: resourceType,
+      type: deliveryType,
+      use_filename: true
+    },
     (error, result) => (error ? reject(error) : resolve(result))
   );
 
@@ -17,7 +30,7 @@ const uploadBuffer = (file, folder) => new Promise((resolve, reject) => {
 });
 
 const uploadService = {
-  async uploadSingleFile(file, folder) {
+  async uploadSingleFile(file, folder, options = {}) {
     if (!env.cloudinary.cloudName || !env.cloudinary.apiKey || !env.cloudinary.apiSecret) {
       throw new AppError(
         'File uploads are not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Backend/.env.',
@@ -26,10 +39,15 @@ const uploadService = {
     }
 
     try {
-      const result = await uploadBuffer(file, folder);
+      const result = await uploadBuffer(file, folder, options);
+      const resourceType = options.resourceType || result.resource_type || DEFAULT_RESOURCE_TYPE;
+      const deliveryType = options.deliveryType || result.type || DEFAULT_DELIVERY_TYPE;
+      const storageUri = toStorageUri(result.public_id, resourceType, deliveryType);
       return {
-        fileUrl: result.secure_url,
+        fileUrl: options.exposePublicUrl ? result.secure_url : storageUri,
         cloudinaryPublicId: result.public_id,
+        cloudinaryResourceType: resourceType,
+        cloudinaryDeliveryType: deliveryType,
         fileName: file.originalname,
         mimeType: file.mimetype,
         fileSize: file.size
@@ -57,17 +75,23 @@ const uploadService = {
     }
   },
 
-  async uploadMultipleFiles(files = [], folder) {
-    return Promise.all(files.map((file) => this.uploadSingleFile(file, folder)));
+  async uploadMultipleFiles(files = [], folder, options = {}) {
+    return Promise.all(files.map((file) => this.uploadSingleFile(file, folder, options)));
   },
 
-  async deleteFile(publicId) {
+  async deleteFile(publicId, options = {}) {
     if (!publicId) return null;
-    return cloudinary.uploader.destroy(publicId, { resource_type: 'auto' });
+    return cloudinary.uploader.destroy(publicId, {
+      resource_type: options.resourceType || DEFAULT_RESOURCE_TYPE,
+      type: options.deliveryType || DEFAULT_DELIVERY_TYPE
+    });
   },
 
-  async getFileMetadata(publicId) {
-    return cloudinary.api.resource(publicId, { resource_type: 'auto' });
+  async getFileMetadata(publicId, options = {}) {
+    return cloudinary.api.resource(publicId, {
+      resource_type: options.resourceType || DEFAULT_RESOURCE_TYPE,
+      type: options.deliveryType || DEFAULT_DELIVERY_TYPE
+    });
   }
 };
 

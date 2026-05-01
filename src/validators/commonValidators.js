@@ -1,6 +1,7 @@
 const { z } = require('zod');
 
 const idParam = z.object({ params: z.object({ id: z.string().min(1) }) });
+const fileIdParam = z.object({ params: z.object({ fileId: z.string().min(1) }) });
 const userIdParam = z.object({ params: z.object({ id: z.string().min(1), userId: z.string().min(1) }) });
 const channelMessageParam = z.object({ params: z.object({ id: z.string().min(1), messageId: z.string().min(1) }) });
 const itemParam = z.object({ params: z.object({ id: z.string().min(1), itemId: z.string().min(1) }) });
@@ -20,4 +21,4 @@ const listQuery = z.object({
 
 const anyBody = z.object({ body: z.record(z.any()) }).passthrough();
 
-module.exports = { idParam, userIdParam, channelMessageParam, itemParam, participantParam, listQuery, anyBody };
+module.exports = { idParam, fileIdParam, userIdParam, channelMessageParam, itemParam, participantParam, listQuery, anyBody };

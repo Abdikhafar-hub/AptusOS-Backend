@@ -695,6 +695,7 @@ enum AuditAction {
   DOCUMENT_UPLOADED
   DOCUMENT_APPROVED
   DOCUMENT_REJECTED
+  DOCUMENT_ACCESSED
   APPROVAL_CREATED
   APPROVAL_APPROVED
   APPROVAL_REJECTED
@@ -968,7 +969,15 @@ model Department {
   id             String             @id @default(cuid())
   name           String             @unique
   slug           String             @unique
+  code           String?
   description    String?
+  businessUnit   String?
+  costCenter     String?
+  location       String?
+  contactEmail   String?
+  contactPhone   String?
+  mission        String?
+  operatingNotes String?
   headId         String?
   status         DepartmentStatus   @default(ACTIVE)
   head           User?              @relation("DepartmentHead", fields: [headId], references: [id])
@@ -990,6 +999,8 @@ model Department {
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
   deletedAt      DateTime?
+  @@index([code])
+  @@index([businessUnit])
   @@index([headId])
 }
 
@@ -1039,6 +1050,8 @@ model Document {
   documentType       String?
   fileUrl            String
   cloudinaryPublicId String?
+  cloudinaryResourceType String @default("raw")
+  cloudinaryDeliveryType String @default("authenticated")
   fileName           String
   mimeType           String
   fileSize           Int
@@ -1078,6 +1091,8 @@ model DocumentVersion {
   version            Int
   fileUrl            String
   cloudinaryPublicId String?
+  cloudinaryResourceType String @default("raw")
+  cloudinaryDeliveryType String @default("authenticated")
   fileName           String
   mimeType           String
   fileSize           Int

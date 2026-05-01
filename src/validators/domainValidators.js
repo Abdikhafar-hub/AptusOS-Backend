@@ -1,5 +1,15 @@
 const { z } = require('zod');
 
+const departmentStatuses = ['ACTIVE', 'ARCHIVED'];
+const optionalShortText = z.string().trim().max(120).optional();
+const optionalLongText = z.string().trim().max(2000).optional();
+const optionalDepartmentCode = z.string().trim().max(24).optional();
+const optionalPhone = z.string().trim().max(32).optional();
+const optionalEmail = z.preprocess(
+  (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+  z.string().trim().email().optional()
+);
+
 const mailListQuery = z.object({
   query: z.object({
     search: z.string().optional(),
@@ -17,8 +27,38 @@ const mailListQuery = z.object({
 });
 
 module.exports = {
-  departmentCreate: z.object({ body: z.object({ name: z.string().min(2), description: z.string().optional(), headId: z.string().optional() }) }),
-  departmentUpdate: z.object({ body: z.object({ name: z.string().min(2).optional(), description: z.string().optional(), headId: z.string().optional(), status: z.string().optional() }) }),
+  departmentCreate: z.object({
+    body: z.object({
+      name: z.string().trim().min(2).max(120),
+      code: optionalDepartmentCode,
+      description: optionalLongText,
+      businessUnit: optionalShortText,
+      costCenter: optionalShortText,
+      location: optionalShortText,
+      contactEmail: optionalEmail,
+      contactPhone: optionalPhone,
+      mission: optionalLongText,
+      operatingNotes: optionalLongText,
+      headId: z.string().optional(),
+      status: z.enum(departmentStatuses).optional()
+    })
+  }),
+  departmentUpdate: z.object({
+    body: z.object({
+      name: z.string().trim().min(2).max(120).optional(),
+      code: optionalDepartmentCode,
+      description: optionalLongText,
+      businessUnit: optionalShortText,
+      costCenter: optionalShortText,
+      location: optionalShortText,
+      contactEmail: optionalEmail,
+      contactPhone: optionalPhone,
+      mission: optionalLongText,
+      operatingNotes: optionalLongText,
+      headId: z.string().optional(),
+      status: z.enum(departmentStatuses).optional()
+    })
+  }),
   addStaff: z.object({ body: z.object({ userId: z.string().min(1) }) }),
   transferStaff: z.object({ body: z.object({ userId: z.string().min(1), toDepartmentId: z.string().min(1) }) }),
   documentUpload: z.object({ body: z.object({ title: z.string().min(1), description: z.string().optional(), category: z.string().min(1), documentType: z.string().optional(), ownerType: z.string().min(1), ownerId: z.string().optional(), departmentId: z.string().optional(), visibility: z.string().optional(), status: z.string().optional(), expiryDate: z.coerce.date().optional(), reminderDate: z.coerce.date().optional(), folder: z.string().optional() }).passthrough() }),
